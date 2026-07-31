@@ -14,9 +14,6 @@ export interface Trade {
   outcome: 'Profit' | 'Loss' | '';
   reward: number | null;
   commission: number | null;
-  entryPrice: number;
-  takeProfitPrice: number | null;
-  stopLossPrice: number | null;
   entryModel: string;
   images: ImageEntry[];
   remarks: string;
@@ -55,62 +52,10 @@ export interface MonthYear {
 export type ColumnDef = {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'date' | 'day' | 'pair' | 'direction' | 'outcome' | 'numeric' | 'commission' | 'images' | 'remarks' | 'dropdown' | 'price';
+  type: 'text' | 'number' | 'date' | 'day' | 'pair' | 'direction' | 'outcome' | 'numeric' | 'commission' | 'images' | 'remarks' | 'dropdown';
   width?: string;
   options?: string[];
   isDefault?: boolean;
 };
 
-export type Role = 'owner' | 'admin' | 'editor' | 'commenter' | 'viewer';
-export type InviteStatus = 'pending' | 'accepted' | 'rejected' | 'expired' | 'cancelled' | 'revoked';
 
-export interface Collaborator {
-  id: string;
-  ownerUid: string;
-  email: string;
-  role: Exclude<Role, 'owner'>;
-  status: InviteStatus;
-  collaboratorUid: string | null;
-  token?: string;
-  expiresAt?: string;
-  message?: string;
-  createdAt: string;
-}
-
-export interface SharedJournal {
-  ownerUid: string;
-  ownerName: string;
-  ownerEmail: string;
-  role: Exclude<Role, 'owner'>;
-}
-
-export interface Comment {
-  id: string;
-  tradeId: string;
-  userId: string;
-  message: string;
-  resolved: boolean;
-  createdAt: string;
-  updatedAt: string;
-  user?: UserProfile; // Joined data
-}
-
-export interface ActivityLog {
-  id: string;
-  journalOwnerUid: string;
-  userId: string;
-  action: string;
-  metadata: Record<string, any>;
-  createdAt: string;
-  user?: UserProfile; // Joined data
-}
-
-export interface Notification {
-  id: string;
-  userId: string;
-  type: string;
-  title: string;
-  body: string;
-  read: boolean;
-  createdAt: string;
-}

@@ -29,7 +29,6 @@ const TradesContext = createContext<TradesContextValue>({
   refreshTrades: async () => {},
 });
 
-import { useActiveJournal } from './useActiveJournal';
 
 interface TradesProviderProps {
   children: ReactNode;
@@ -39,12 +38,11 @@ interface TradesProviderProps {
 
 export function TradesProvider({ children, year, month }: TradesProviderProps) {
   const { user } = useAuth();
-  const { activeJournalId, activeRole } = useActiveJournal();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadTrades = useCallback(async () => {
-    if (!activeJournalId) {
+    if (!user) {
       setTrades([]);
       setLoading(false);
       return;
@@ -52,48 +50,48 @@ export function TradesProvider({ children, year, month }: TradesProviderProps) {
 
     setLoading(true);
     try {
-      const data = await fetchTrades(activeJournalId, year, month);
+      const data = await fetchTrades(user.id, year, month);
       setTrades(data);
     } catch (error) {
       console.error('Failed to load trades:', error);
     } finally {
       setLoading(false);
     }
-  }, [activeJournalId, year, month]);
+  }, [user, year, month]);
 
   useEffect(() => {
     loadTrades();
   }, [loadTrades]);
 
   const addTrade = useCallback(async () => {
-    if (!activeJournalId || activeRole === 'viewer') return null;
+    if (!user) return null;
     const empty = createEmptyTrade();
-    const id = await addTradeToDb(activeJournalId, year, month, empty);
+    const id = await addTradeToDb(user.id, year, month, empty);
     if (id) {
       await loadTrades(); // Refresh the list
     }
     return id;
-  }, [activeJournalId, activeRole, year, month, loadTrades]);
+  }, [user, year, month, loadTrades]);
 
   const updateTrade = useCallback(
     async (tradeId: string, updates: Partial<Trade>) => {
-      if (!activeJournalId || activeRole === 'viewer') return;
+      if (!user) return;
       // Optimistic update
       setTrades((prev) =>
         prev.map((t) => (t.id === tradeId ? { ...t, ...updates } : t))
       );
-      await updateTradeInDb(activeJournalId, year, month, tradeId, updates);
+      await updateTradeInDb(user.id, year, month, tradeId, updates);
     },
-    [activeJournalId, activeRole, year, month]
+    [user, year, month]
   );
 
   const deleteTrade = useCallback(
     async (tradeId: string) => {
-      if (!activeJournalId || activeRole === 'viewer') return;
-      await deleteTradeFromDb(activeJournalId, year, month, tradeId);
+      if (!user) return;
+      await deleteTradeFromDb(user.id, year, month, tradeId);
       setTrades((prev) => prev.filter((t) => t.id !== tradeId));
     },
-    [activeJournalId, activeRole, year, month]
+    [user, year, month]
   );
 
   return (

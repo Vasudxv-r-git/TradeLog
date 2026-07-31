@@ -1,5 +1,5 @@
 import { getSupabase } from './supabase';
-import { Trade, UserProfile, CustomPair, CustomColumn, Collaborator, SharedJournal, Role } from '@/types';
+import { Trade, UserProfile, CustomPair, CustomColumn } from '@/types';
 
 // --- Helper: year_month key ---
 function yearMonthKey(year: number, month: number): string {
@@ -45,9 +45,7 @@ export async function addTrade(
       pair: trade.pair,
       direction: trade.direction || '',
       outcome: trade.outcome || '',
-      entry_price: trade.entryPrice,
-      take_profit_price: trade.takeProfitPrice,
-      stop_loss_price: trade.stopLossPrice,
+
       reward: trade.reward,
       commission: trade.commission,
       entry_model: trade.entryModel,
@@ -83,9 +81,7 @@ export async function updateTrade(
   if (updates.pair !== undefined) dbUpdates.pair = updates.pair;
   if (updates.direction !== undefined) dbUpdates.direction = updates.direction;
   if (updates.outcome !== undefined) dbUpdates.outcome = updates.outcome;
-  if (updates.entryPrice !== undefined) dbUpdates.entry_price = updates.entryPrice;
-  if (updates.takeProfitPrice !== undefined) dbUpdates.take_profit_price = updates.takeProfitPrice;
-  if (updates.stopLossPrice !== undefined) dbUpdates.stop_loss_price = updates.stopLossPrice;
+
   if (updates.reward !== undefined) dbUpdates.reward = updates.reward;
   if (updates.commission !== undefined) dbUpdates.commission = updates.commission;
   if (updates.entryModel !== undefined) dbUpdates.entry_model = updates.entryModel;
@@ -237,114 +233,7 @@ export async function uploadImage(
   return urlData.publicUrl;
 }
 
-// ============================================
-// COLLABORATION
-// ============================================
 
-export async function fetchCollaborators(ownerUid: string): Promise<Collaborator[]> {
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from('journal_collaborators')
-    .select('*')
-    .eq('owner_uid', ownerUid)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching collaborators:', error);
-    return [];
-  }
-
-  return (data || []).map(row => ({
-    id: row.id,
-    ownerUid: row.owner_uid,
-    email: row.email,
-    role: row.role,
-    status: row.status,
-    collaboratorUid: row.collaborator_uid,
-    createdAt: row.created_at,
-  }));
-}
-
-export async function addCollaborator(ownerUid: string, email: string, role: Role): Promise<boolean> {
-  const supabase = getSupabase();
-  const { error } = await supabase
-    .from('journal_collaborators')
-    .insert({
-      owner_uid: ownerUid,
-      email: email.toLowerCase(),
-      role: role,
-    });
-
-  if (error) {
-    console.error('Error adding collaborator:', error);
-    return false;
-  }
-  return true;
-}
-
-export async function updateCollaboratorRole(id: string, role: Role): Promise<void> {
-  const supabase = getSupabase();
-  const { error } = await supabase
-    .from('journal_collaborators')
-    .update({ role })
-    .eq('id', id);
-
-  if (error) {
-    console.error('Error updating collaborator:', error);
-  }
-}
-
-export async function removeCollaborator(id: string): Promise<void> {
-  const supabase = getSupabase();
-  const { error } = await supabase
-    .from('journal_collaborators')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error('Error removing collaborator:', error);
-  }
-}
-
-export async function fetchSharedJournals(userEmail: string): Promise<SharedJournal[]> {
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from('journal_collaborators')
-    .select(`
-      owner_uid,
-      role,
-      users!inner (
-        display_name,
-        email
-      )
-    `)
-    .eq('email', userEmail.toLowerCase())
-    .eq('status', 'accepted');
-
-  if (error) {
-    console.error('Error fetching shared journals:', error);
-    return [];
-  }
-
-  return (data || []).map((row: any) => ({
-    ownerUid: row.owner_uid,
-    ownerName: row.users?.display_name || row.users?.email || 'Unknown',
-    ownerEmail: row.users?.email || '',
-    role: row.role,
-  }));
-}
-
-export async function acceptPendingInvites(userEmail: string, userId: string): Promise<void> {
-  const supabase = getSupabase();
-  const { error } = await supabase.rpc('accept_pending_invites', {
-    user_email: userEmail.toLowerCase(),
-    user_id: userId,
-  });
-
-  if (error) {
-    console.error('Error accepting pending invites:', error);
-  }
-}
 
 // ============================================
 // HELPERS
@@ -359,9 +248,7 @@ function mapDbToTrade(row: any): Trade {
     pair: row.pair || '',
     direction: row.direction || '',
     outcome: row.outcome || '',
-    entryPrice: row.entry_price || 0,
-    takeProfitPrice: row.take_profit_price,
-    stopLossPrice: row.stop_loss_price,
+
     reward: row.reward,
     commission: row.commission,
     entryModel: row.entry_model || '',

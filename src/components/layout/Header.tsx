@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { BarChart3, LogOut, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import ThemeToggle from '@/components/ui/ThemeToggle';
-import CollaboratePanel from '@/components/journal/CollaboratePanel';
 
 export default function Header() {
   const { user, signOut } = useAuth();
-  const [showCollaborate, setShowCollaborate] = useState(false);
 
   return (
     <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-default)', position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(12px)', transition: 'background-color 0.25s ease' }}>
@@ -20,15 +18,6 @@ export default function Header() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        {user && (
-          <button 
-            onClick={() => setShowCollaborate(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'red', border: '3px solid yellow', padding: '10px 20px', borderRadius: 8, cursor: 'pointer', color: 'white', fontSize: '1rem', fontWeight: 900 }}
-          >
-            <Users size={20} />
-            <span>TEST COLLABORATE BUTTON</span>
-          </button>
-        )}
         <ThemeToggle />
         {user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 12, borderLeft: '1px solid var(--border-default)' }}>
@@ -43,7 +32,6 @@ export default function Header() {
         )}
       </div>
 
-      {showCollaborate && <CollaboratePanel onClose={() => setShowCollaborate(false)} />}
     </header>
   );
 }

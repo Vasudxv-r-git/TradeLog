@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabase';
-import { createOrUpdateUserProfile, acceptPendingInvites } from '@/lib/database';
+import { createOrUpdateUserProfile } from '@/lib/database';
 
 interface AuthContextValue {
   user: User | null;
@@ -46,10 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: u.email || '',
           photoURL: u.user_metadata?.avatar_url || '',
         });
-
-        if (u.email) {
-          await acceptPendingInvites(u.email, u.id);
-        }
       }
     });
 

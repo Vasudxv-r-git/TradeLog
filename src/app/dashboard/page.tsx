@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useActiveJournal } from '@/hooks/useActiveJournal';
 import { useMonthYear } from '@/hooks/useMonthYear';
 import { TradesProvider, useTrades } from '@/hooks/useTrades';
 import { Trade, CustomColumn, CustomPair } from '@/types';
@@ -12,9 +11,7 @@ import MonthYearSelector from '@/components/overview/MonthYearSelector';
 import TradeGrid from '@/components/journal/TradeGrid';
 import MonthlyOverview from '@/components/overview/MonthlyOverview';
 import PnLChart from '@/components/overview/PnLChart';
-import DownloadReports from '@/components/reports/DownloadReports';
 import TradePanel from '@/components/journal/NewTradePanel';
-import JournalSwitcher from '@/components/journal/JournalSwitcher';
 import { removeCustomPair } from '@/lib/database';
 
 function DashboardContent({
@@ -41,24 +38,23 @@ function DashboardContent({
   onDeletePair: (pairSymbol: string) => void;
 }) {
   const { user } = useAuth();
-  const { activeJournalId, activeRole } = useActiveJournal();
   const { trades, refreshTrades } = useTrades();
   const [showNewTrade, setShowNewTrade] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
 
   // Create new trade
   const handleSaveNewTrade = async (newTrade: Partial<Trade>) => {
-    if (!activeJournalId || activeRole === 'viewer') return;
+    if (!user) return;
     const fullTrade = { ...newTrade, images: newTrade.images || [] };
-    await addTrade(activeJournalId, year, month, fullTrade as any);
+    await addTrade(user.id, year, month, fullTrade as any);
     setShowNewTrade(false);
     refreshTrades();
   };
 
   // Update existing trade
   const handleSaveEditedTrade = async (updatedTrade: Partial<Trade>) => {
-    if (!activeJournalId || !editingTrade || activeRole === 'viewer') return;
-    await updateTradeInDb(activeJournalId, year, month, editingTrade.id, updatedTrade);
+    if (!user || !editingTrade) return;
+    await updateTradeInDb(user.id, year, month, editingTrade.id, updatedTrade);
     setEditingTrade(null);
     refreshTrades();
   };
@@ -71,17 +67,12 @@ function DashboardContent({
         {trades.length > 0 && <PnLChart trades={trades} />}
       </div>
 
-      {/* 2. Download Reports Section */}
-      <DownloadReports />
-
-      {/* 3. New Trade Button */}
-      {activeRole !== 'viewer' && (
-        <div>
-          <button className="btn btn-primary" onClick={() => setShowNewTrade(true)}>
-            <Plus size={16} /><span>New Trade</span>
-          </button>
-        </div>
-      )}
+      {/* 2. New Trade Button */}
+      <div>
+        <button className="btn btn-primary" onClick={() => setShowNewTrade(true)}>
+          <Plus size={16} /><span>New Trade</span>
+        </button>
+      </div>
 
       {/* 3. Trades Grid (Single Source of Truth — read-only cells) */}
       <TradeGrid
@@ -128,7 +119,6 @@ function DashboardContent({
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { activeJournalId, activeRole } = useActiveJournal();
   const { year, month, setYear, setMonth } = useMonthYear();
   const [customColumns, setCustomColumns] = useState<CustomColumn[]>([]);
   const [customPairs, setCustomPairs] = useState<CustomPair[]>([]);
@@ -136,8 +126,8 @@ export default function DashboardPage() {
   const [hiddenPairs, setHiddenPairs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!activeJournalId) return;
-    getUserProfile(activeJournalId).then((profile) => {
+    if (!user) return;
+    getUserProfile(user.id).then((profile) => {
       if (profile) {
         setCustomColumns(profile.customColumns || []);
         setCustomPairs(profile.customPairs || []);
@@ -151,12 +141,12 @@ export default function DashboardPage() {
     if (savedPairs) {
       try { setHiddenPairs(new Set(JSON.parse(savedPairs))); } catch {}
     }
-  }, [activeJournalId]);
+  }, [user]);
 
   const handleAddColumn = useCallback(
     async (column: CustomColumn) => {
-      if (!activeJournalId || activeRole !== 'owner') return;
-      await addCustomColumn(activeJournalId, column);
+      if (!user) return;
+      await addCustomColumn(user.id, column);
       setCustomColumns((prev) => [...prev, column]);
       setHiddenColumns((prev) => {
         const next = new Set(prev);
@@ -165,13 +155,13 @@ export default function DashboardPage() {
         return next;
       });
     },
-    [activeJournalId, activeRole]
+    [user]
   );
 
   const handleAddPair = useCallback(
     async (pair: CustomPair) => {
-      if (!activeJournalId || activeRole !== 'owner') return;
-      await addCustomPair(activeJournalId, pair);
+      if (!user) return;
+      await addCustomPair(user.id, pair);
       setCustomPairs((prev) => [...prev, pair]);
       setHiddenPairs((prev) => {
         const next = new Set(prev);
@@ -180,15 +170,14 @@ export default function DashboardPage() {
         return next;
       });
     },
-    [activeJournalId, activeRole]
+    [user]
   );
 
   const handleDeleteColumn = useCallback(
     async (columnKey: string) => {
-      if (activeRole !== 'owner') return;
       const isCustom = customColumns.some((c) => c.key === columnKey);
-      if (isCustom && activeJournalId) {
-        await removeCustomColumn(activeJournalId, columnKey);
+      if (isCustom && user) {
+        await removeCustomColumn(user.id, columnKey);
         setCustomColumns((prev) => prev.filter((c) => c.key !== columnKey));
       }
       setHiddenColumns((prev) => {
@@ -198,15 +187,14 @@ export default function DashboardPage() {
         return next;
       });
     },
-    [activeJournalId, activeRole, customColumns]
+    [user, customColumns]
   );
 
   const handleDeletePair = useCallback(
     async (pairSymbol: string) => {
-      if (activeRole !== 'owner') return;
       const isCustom = customPairs.some((p) => p.symbol === pairSymbol);
-      if (isCustom && activeJournalId) {
-        await removeCustomPair(activeJournalId, pairSymbol);
+      if (isCustom && user) {
+        await removeCustomPair(user.id, pairSymbol);
         setCustomPairs((prev) => prev.filter((p) => p.symbol !== pairSymbol));
       }
       setHiddenPairs((prev) => {
@@ -216,7 +204,7 @@ export default function DashboardPage() {
         return next;
       });
     },
-    [activeJournalId, activeRole, customPairs]
+    [user, customPairs]
   );
 
   return (
@@ -229,7 +217,6 @@ export default function DashboardPage() {
             onYearChange={setYear}
             onMonthChange={setMonth}
           />
-          <JournalSwitcher />
         </div>
       </div>
 

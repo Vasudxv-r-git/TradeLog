@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useTrades } from '@/hooks/useTrades';
-import { useActiveJournal } from '@/hooks/useActiveJournal';
 import { DEFAULT_COLUMNS } from '@/lib/constants';
 import { Trade, CustomColumn, CustomPair, ColumnDef } from '@/types';
 import TradeRow from './TradeRow';
@@ -22,7 +21,6 @@ interface TradeGridProps {
 
 export default function TradeGrid({ customColumns, customPairs, hiddenColumns, onAddCustomColumn, onAddCustomPair, onDeleteColumn, onEditTrade }: TradeGridProps) {
   const { trades, loading, deleteTrade } = useTrades();
-  const { activeRole } = useActiveJournal();
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [confirmDeleteCol, setConfirmDeleteCol] = useState<string | null>(null);
@@ -34,7 +32,6 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
   ].filter((col) => !hiddenColumns.has(col.key));
 
   const handleDeleteRow = async (tradeId: string) => {
-    if (activeRole === 'viewer') return;
     setRemovingIds((prev) => new Set(prev).add(tradeId));
     setTimeout(async () => {
       await deleteTrade(tradeId);
@@ -43,7 +40,6 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
   };
 
   const handleConfirmDeleteColumn = (colKey: string) => {
-    if (activeRole !== 'owner') return;
     onDeleteColumn(colKey);
     setConfirmDeleteCol(null);
   };
@@ -62,9 +58,7 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Trades</h3>
-        {activeRole === 'owner' && (
-          <button className="btn btn-secondary btn-sm" onClick={() => setShowAddColumn(true)}><Columns3 size={14} /><span>Add Column</span></button>
-        )}
+        <button className="btn btn-secondary btn-sm" onClick={() => setShowAddColumn(true)}><Columns3 size={14} /><span>Add Column</span></button>
       </div>
 
       {trades.length === 0 ? <EmptyState /> : (
@@ -80,7 +74,7 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
                   onMouseLeave={() => setHoveredCol(null)}
                 >
                   <span>{col.label}</span>
-                  {!col.isDefault && activeRole === 'owner' && (
+                  {!col.isDefault && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmDeleteCol(col.key); }}
                       title="Delete column"
@@ -97,9 +91,7 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
                   )}
                 </div>
               ))}
-              {activeRole !== 'viewer' && (
-                <div style={{ width: 70, minWidth: 70, padding: '10px 8px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)', position: 'sticky', right: 0, background: 'var(--grid-header-bg)', borderLeft: '1px solid var(--grid-border)', zIndex: 11 }}>Actions</div>
-              )}
+              <div style={{ width: 70, minWidth: 70, padding: '10px 8px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)', position: 'sticky', right: 0, background: 'var(--grid-header-bg)', borderLeft: '1px solid var(--grid-border)', zIndex: 11 }}>Actions</div>
             </div>
             {trades.map((trade, index) => (
               <TradeRow

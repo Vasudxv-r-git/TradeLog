@@ -40,7 +40,6 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
       ? { ...editingTrade }
       : {
           tradeNumber: '', date: '', day: '', pair: '', direction: '', outcome: '',
-          entryPrice: 0, takeProfitPrice: null, stopLossPrice: null,
           reward: null, commission: null, entryModel: '', images: [], remarks: '', customFields: {}
         }
   );
@@ -129,19 +128,6 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
   };
 
   const handleSaveClick = () => {
-    if (!trade.entryPrice || trade.entryPrice <= 0) {
-      setError('Entry Price is required and must be greater than 0');
-      return;
-    }
-    if (trade.takeProfitPrice !== null && trade.takeProfitPrice !== undefined && trade.takeProfitPrice <= 0) {
-      setError('Take Profit Price must be greater than 0 if entered');
-      return;
-    }
-    if (trade.stopLossPrice !== null && trade.stopLossPrice !== undefined && trade.stopLossPrice <= 0) {
-      setError('Stop Loss Price must be greater than 0 if entered');
-      return;
-    }
-
     if (!isEditing) {
       const hasValue = (
         (trade.date || '').trim() !== '' ||
@@ -240,49 +226,6 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Section: Pricing */}
-            <div style={dividerStyle} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {isVisible('entryPrice') && (
-                <div>
-                  <label style={labelStyle}>Entry Price <span style={{color: 'var(--danger-text)'}}>*</span></label>
-                  <input 
-                    style={inputStyle} 
-                    type="number" step="any" min="0" 
-                    value={trade.entryPrice || ''} 
-                    onChange={(e) => handleUpdate({ entryPrice: parseFloat(e.target.value) || 0 })} 
-                    placeholder="Enter Entry Price" 
-                  />
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                {isVisible('takeProfitPrice') && (
-                  <div>
-                    <label style={labelStyle}>Take Profit Price</label>
-                    <input 
-                      style={inputStyle} 
-                      type="number" step="any" min="0" 
-                      value={trade.takeProfitPrice || ''} 
-                      onChange={(e) => handleUpdate({ takeProfitPrice: e.target.value ? parseFloat(e.target.value) : null })} 
-                      placeholder="Enter Take Profit Price" 
-                    />
-                  </div>
-                )}
-                {isVisible('stopLossPrice') && (
-                  <div>
-                    <label style={labelStyle}>Stop Loss Price</label>
-                    <input 
-                      style={inputStyle} 
-                      type="number" step="any" min="0" 
-                      value={trade.stopLossPrice || ''} 
-                      onChange={(e) => handleUpdate({ stopLossPrice: e.target.value ? parseFloat(e.target.value) : null })} 
-                      placeholder="Enter Stop Loss Price" 
-                    />
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Section: Financials */}

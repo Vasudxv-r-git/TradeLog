@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
 import { DEFAULT_PAIR_GROUPS, PairGroup } from '@/lib/constants';
 import { CustomPair } from '@/types';
-import { useActiveJournal } from '@/hooks/useActiveJournal';
 
 interface PairSelectProps {
   value: string;
@@ -21,7 +20,6 @@ export default function PairSelect({ value, customPairs, hiddenPairs, onChange, 
   const [newSymbol, setNewSymbol] = useState('');
   const [newCategory, setNewCategory] = useState('Commodities');
   const [hoveredPair, setHoveredPair] = useState<string | null>(null);
-  const { activeRole } = useActiveJournal();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,7 +68,7 @@ export default function PairSelect({ value, customPairs, hiddenPairs, onChange, 
                   <button onClick={() => { onChange(pair); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '6px 10px', textAlign: 'left', fontSize: '0.8125rem', color: pair === value ? 'var(--accent-text)' : 'var(--text-secondary)', background: pair === value ? 'var(--accent-light)' : 'transparent', borderRadius: 4, cursor: 'pointer', border: 'none', fontWeight: 500 }}>
                     {pair}
                   </button>
-                  {hoveredPair === pair && activeRole === 'owner' && (
+                  {hoveredPair === pair && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onDeletePair(pair); }}
                       title="Delete pair"
@@ -84,20 +82,18 @@ export default function PairSelect({ value, customPairs, hiddenPairs, onChange, 
             </div>
           ))}
           <div style={{ height: 1, background: 'var(--border-default)', margin: '6px 0' }} />
-          {activeRole === 'owner' && (
-            addingPair ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 6 }}>
-                <input placeholder="Symbol (e.g., BTC/USD)" value={newSymbol} onChange={(e) => setNewSymbol(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddPair()} autoFocus style={{ padding: '4px 8px', fontSize: '0.8125rem', borderRadius: 4, border: '1px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)' }} />
-                <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} style={{ padding: '4px 8px', fontSize: '0.8125rem', borderRadius: 4, background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}>
-                  {allCategories.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
-                </select>
-                <button className="btn btn-primary btn-sm" onClick={handleAddPair}>Add</button>
-              </div>
-            ) : (
-              <button onClick={() => setAddingPair(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '6px 10px', fontSize: '0.8125rem', color: 'var(--accent-text)', borderRadius: 4, cursor: 'pointer', border: 'none', background: 'transparent' }}>
-                <Plus size={14} /><span>Add Pair</span>
-              </button>
-            )
+          {addingPair ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 6 }}>
+              <input placeholder="Symbol (e.g., BTC/USD)" value={newSymbol} onChange={(e) => setNewSymbol(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddPair()} autoFocus style={{ padding: '4px 8px', fontSize: '0.8125rem', borderRadius: 4, border: '1px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)' }} />
+              <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} style={{ padding: '4px 8px', fontSize: '0.8125rem', borderRadius: 4, background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}>
+                {allCategories.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+              </select>
+              <button className="btn btn-primary btn-sm" onClick={handleAddPair}>Add</button>
+            </div>
+          ) : (
+            <button onClick={() => setAddingPair(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '6px 10px', fontSize: '0.8125rem', color: 'var(--accent-text)', borderRadius: 4, cursor: 'pointer', border: 'none', background: 'transparent' }}>
+              <Plus size={14} /><span>Add Pair</span>
+            </button>
           )}
         </div>
       )}
