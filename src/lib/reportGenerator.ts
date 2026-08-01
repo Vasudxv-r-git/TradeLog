@@ -312,14 +312,14 @@ export function generateReportPDF(options: GenerateReportOptions): void {
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 8 },
-      1: { cellWidth: 22 },
-      2: { cellWidth: 14 },
+      1: { cellWidth: 17 },
+      2: { cellWidth: 19 },
       3: { cellWidth: 20 },
       4: { halign: 'center', cellWidth: 14 },
       5: { halign: 'center', cellWidth: 18 },
       6: { halign: 'right', cellWidth: 20 },
-      7: { halign: 'right', cellWidth: 18 },
-      8: { cellWidth: 24 },
+      7: { halign: 'right', cellWidth: 16 },
+      8: { cellWidth: 26 },
       9: { cellWidth: 'auto' },
     },
     didParseCell: (data) => {
