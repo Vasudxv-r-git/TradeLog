@@ -166,8 +166,14 @@ export function generateReportPDF(options: GenerateReportOptions): void {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(255, 255, 255);
-  const mainTitle = options.userName ? `TradeLog Report by ${options.userName}` : 'TradeLog Report';
+  const mainTitle = 'TradeLog Report';
   doc.text(mainTitle, 14, 13);
+
+  if (options.userName) {
+    const titleWidth = doc.getTextWidth(mainTitle);
+    doc.setFontSize(12); // Smaller text size, but retains identical 'helvetica', 'bold', and white color
+    doc.text(`by ${options.userName}`, 14 + titleWidth + 3, 13);
+  }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
