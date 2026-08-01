@@ -108,6 +108,7 @@ CREATE TRIGGER update_trades_updated_at
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('trade-images', 'trade-images', true);
 
 -- Enforce bucket level RLS policies for storage.objects
+DROP POLICY IF EXISTS "Users can upload trade images to their own folder" ON storage.objects;
 CREATE POLICY "Users can upload trade images to their own folder"
   ON storage.objects FOR INSERT
   WITH CHECK (
@@ -115,6 +116,7 @@ CREATE POLICY "Users can upload trade images to their own folder"
     (storage.foldername(name))[1] = auth.uid()::text
   );
 
+DROP POLICY IF EXISTS "Users can read trade images in their own folder" ON storage.objects;
 CREATE POLICY "Users can read trade images in their own folder"
   ON storage.objects FOR SELECT
   USING (
@@ -122,6 +124,7 @@ CREATE POLICY "Users can read trade images in their own folder"
     (storage.foldername(name))[1] = auth.uid()::text
   );
 
+DROP POLICY IF EXISTS "Users can delete trade images in their own folder" ON storage.objects;
 CREATE POLICY "Users can delete trade images in their own folder"
   ON storage.objects FOR DELETE
   USING (

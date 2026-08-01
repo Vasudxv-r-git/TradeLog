@@ -11,7 +11,7 @@ let supabase: SupabaseClient;
 
 export function getSupabase(): SupabaseClient {
   if (!supabase) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    supabase = createClient(supabaseUrl as string, supabaseAnonKey as string);
   }
   return supabase;
 }
