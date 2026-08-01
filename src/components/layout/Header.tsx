@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart3, LogOut, Users } from 'lucide-react';
+import { BarChart3, Download, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import ReportModal from '@/components/reports/ReportModal';
 
 export default function Header() {
   const { user, signOut } = useAuth();
+  const [showReportModal, setShowReportModal] = useState(false);
 
   return (
     <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-default)', position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(12px)', transition: 'background-color 0.25s ease' }}>
@@ -30,8 +32,30 @@ export default function Header() {
             </button>
           </div>
         )}
+        <button
+          onClick={() => setShowReportModal(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '7px 14px',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            borderRadius: 8,
+            border: '1px solid var(--accent)',
+            background: 'var(--accent)',
+            color: '#ffffff',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}
+        >
+          <Download size={15} />
+          <span>Download Report</span>
+        </button>
       </div>
 
+      {showReportModal && <ReportModal onClose={() => setShowReportModal(false)} />}
     </header>
   );
 }

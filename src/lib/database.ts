@@ -27,6 +27,58 @@ export async function fetchTrades(uid: string, year: number, month: number): Pro
   return (data || []).map(mapDbToTrade);
 }
 
+export async function fetchTradesForDateRange(
+  uid: string,
+  startDate: string,
+  endDate: string
+): Promise<Trade[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('trades')
+    .select('*')
+    .eq('user_id', uid)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching trades for date range:', error);
+    return [];
+  }
+
+  return (data || []).map(mapDbToTrade);
+}
+
+export async function fetchAvailableYears(uid: string): Promise<number[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('trades')
+    .select('year_month, date')
+    .eq('user_id', uid);
+
+  if (error || !data || data.length === 0) {
+    return [new Date().getFullYear()];
+  }
+
+  const yearsSet = new Set<number>();
+  data.forEach((row) => {
+    if (row.year_month) {
+      const y = parseInt(row.year_month.split('-')[0], 10);
+      if (!isNaN(y)) yearsSet.add(y);
+    }
+    if (row.date) {
+      const y = parseInt(row.date.split('-')[0], 10);
+      if (!isNaN(y)) yearsSet.add(y);
+    }
+  });
+
+  const currentYear = new Date().getFullYear();
+  yearsSet.add(currentYear);
+
+  return Array.from(yearsSet).sort((a, b) => b - a);
+}
+
 export async function addTrade(
   uid: string,
   year: number,
