@@ -40,6 +40,7 @@ export interface UserProfile {
   email: string;
   photoURL: string;
   theme: 'light' | 'dark';
+  passwordHash?: string;
   customPairs: CustomPair[];
   customColumns: CustomColumn[];
 }

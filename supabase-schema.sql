@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   display_name TEXT DEFAULT '',
   email TEXT DEFAULT '',
   photo_url TEXT DEFAULT '',
+  password_hash TEXT DEFAULT '',
   theme TEXT DEFAULT 'dark' CHECK (theme IN ('light', 'dark')),
   custom_pairs JSONB DEFAULT '[]'::jsonb,      -- [{symbol, category}]
   custom_columns JSONB DEFAULT '[]'::jsonb,    -- [{key, name, type, options?}]

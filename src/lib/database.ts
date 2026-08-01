@@ -189,6 +189,29 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     displayName: data.display_name,
     email: data.email,
     photoURL: data.photo_url,
+    passwordHash: data.password_hash,
+    theme: data.theme,
+    customPairs: data.custom_pairs || [],
+    customColumns: data.custom_columns || [],
+  };
+}
+
+export async function getUserByEmail(email: string): Promise<UserProfile | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (error || !data) return null;
+
+  return {
+    uid: data.uid,
+    displayName: data.display_name,
+    email: data.email,
+    photoURL: data.photo_url,
+    passwordHash: data.password_hash,
     theme: data.theme,
     customPairs: data.custom_pairs || [],
     customColumns: data.custom_columns || [],
@@ -205,6 +228,7 @@ export async function createOrUpdateUserProfile(
   if (profile.displayName !== undefined) dbData.display_name = profile.displayName;
   if (profile.email !== undefined) dbData.email = profile.email;
   if (profile.photoURL !== undefined) dbData.photo_url = profile.photoURL;
+  if (profile.passwordHash !== undefined) dbData.password_hash = profile.passwordHash;
   if (profile.theme !== undefined) dbData.theme = profile.theme;
   if (profile.customPairs !== undefined) dbData.custom_pairs = profile.customPairs;
   if (profile.customColumns !== undefined) dbData.custom_columns = profile.customColumns;
@@ -216,6 +240,23 @@ export async function createOrUpdateUserProfile(
   if (error) {
     console.error('Error upserting user profile:', error);
   }
+}
+
+export async function updateUserPasswordHash(
+  uid: string,
+  passwordHash: string
+): Promise<boolean> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from('users')
+    .update({ password_hash: passwordHash })
+    .eq('uid', uid);
+
+  if (error) {
+    console.error('Error updating password hash:', error);
+    return false;
+  }
+  return true;
 }
 
 export async function addCustomPair(uid: string, pair: CustomPair): Promise<void> {
