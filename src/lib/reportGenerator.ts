@@ -166,16 +166,8 @@ export function generateReportPDF(options: GenerateReportOptions): void {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(255, 255, 255);
-  const mainTitle = 'TradeLog Report';
+  const mainTitle = options.userName ? `TradeLog Report by ${options.userName}` : 'TradeLog Report';
   doc.text(mainTitle, 14, 13);
-
-  if (options.userName) {
-    const titleWidth = doc.getTextWidth(mainTitle);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(203, 213, 225); // Slate 300, secondary text color
-    doc.text(`(by ${options.userName})`, 14 + titleWidth + 3, 13);
-  }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);

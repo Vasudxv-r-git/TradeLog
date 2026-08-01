@@ -23,8 +23,8 @@ export default function Header() {
         <ThemeToggle />
         {user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 12, borderLeft: '1px solid var(--border-default)' }}>
-            {user.user_metadata?.avatar_url && (
-              <img src={user.user_metadata.avatar_url} alt={user.user_metadata?.full_name || 'User'} referrerPolicy="no-referrer" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid var(--border-default)' }} />
+            {(user.user_metadata?.avatar_url || user.user_metadata?.picture) && (
+              <img src={user.user_metadata?.avatar_url || user.user_metadata?.picture} alt={user.user_metadata?.full_name || 'User'} referrerPolicy="no-referrer" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid var(--border-default)' }} />
             )}
             <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>
             <button onClick={signOut} title="Sign out" style={{ padding: 6, borderRadius: 6, color: 'var(--text-tertiary)', cursor: 'pointer', background: 'none', border: 'none', display: 'flex' }}>
