@@ -306,21 +306,22 @@ export function generateReportPDF(options: GenerateReportOptions): void {
       halign: 'center',
     },
     styles: {
-      fontSize: 7.5,
-      cellPadding: 2,
+      fontSize: 7, // Slightly reduced to help prevent wrapping
+      cellPadding: 1.5, // Reduced padding to maximize available cell width
       valign: 'middle',
+      overflow: 'ellipsize', // STRICTLY enforces single-line rendering for all text
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 8 },
-      1: { cellWidth: 17 },
-      2: { cellWidth: 19 },
-      3: { cellWidth: 20 },
-      4: { halign: 'center', cellWidth: 14 },
-      5: { halign: 'center', cellWidth: 18 },
-      6: { halign: 'right', cellWidth: 20 },
-      7: { halign: 'right', cellWidth: 16 },
-      8: { cellWidth: 26 },
-      9: { cellWidth: 'auto' },
+      1: { cellWidth: 18 }, // Date: Neatly fits YYYY-MM-DD
+      2: { cellWidth: 20 }, // Day: Comfortably fits longest day "Wednesday"
+      3: { cellWidth: 20 }, // Pair
+      4: { halign: 'center', cellWidth: 12 }, // Dir
+      5: { halign: 'center', cellWidth: 16 }, // Outcome
+      6: { halign: 'right', cellWidth: 20 }, // Reward
+      7: { halign: 'right', cellWidth: 16 }, // Comm
+      8: { cellWidth: 28 }, // Entry Model: Increased further to prevent wrapping
+      9: { cellWidth: 'auto' }, // Remarks
     },
     didParseCell: (data) => {
       // Colorize Reward and Outcome
