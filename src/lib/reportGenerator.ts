@@ -277,7 +277,6 @@ export function generateReportPDF(options: GenerateReportOptions): void {
     t.reward !== null && t.reward !== undefined ? formatCurrency(t.reward) : '—',
     t.commission !== null && t.commission !== undefined ? formatCurrency(t.commission) : '—',
     t.entryModel || '—',
-    t.remarks || '—',
   ]);
 
   autoTable(doc, {
@@ -288,12 +287,11 @@ export function generateReportPDF(options: GenerateReportOptions): void {
         'Date',
         'Day',
         'Pair',
-        'Dir',
+        'Direction',
         'Outcome',
         'Reward',
-        'Comm',
+        'Commission',
         'Entry Model',
-        'Remarks',
       ],
     ],
     body: tableBody,
@@ -312,16 +310,15 @@ export function generateReportPDF(options: GenerateReportOptions): void {
       overflow: 'ellipsize', // STRICTLY enforces single-line rendering for all text
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 8 },
-      1: { cellWidth: 18 }, // Date: Neatly fits YYYY-MM-DD
-      2: { cellWidth: 20 }, // Day: Comfortably fits longest day "Wednesday"
-      3: { cellWidth: 20 }, // Pair
-      4: { halign: 'center', cellWidth: 12 }, // Dir
-      5: { halign: 'center', cellWidth: 16 }, // Outcome
-      6: { halign: 'right', cellWidth: 20 }, // Reward
-      7: { halign: 'right', cellWidth: 16 }, // Comm
-      8: { cellWidth: 28 }, // Entry Model: Increased further to prevent wrapping
-      9: { cellWidth: 'auto' }, // Remarks
+      0: { halign: 'center', cellWidth: 10 },
+      1: { cellWidth: 20 }, // Date
+      2: { cellWidth: 22 }, // Day
+      3: { cellWidth: 22 }, // Pair
+      4: { halign: 'center', cellWidth: 18 }, // Direction
+      5: { halign: 'center', cellWidth: 18 }, // Outcome
+      6: { halign: 'right', cellWidth: 22 }, // Reward
+      7: { halign: 'right', cellWidth: 22 }, // Commission
+      8: { cellWidth: 'auto' }, // Entry Model
     },
     didParseCell: (data) => {
       // Colorize Reward and Outcome
