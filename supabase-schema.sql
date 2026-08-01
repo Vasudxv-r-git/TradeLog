@@ -107,6 +107,28 @@ CREATE TRIGGER update_trades_updated_at
 -- Run this in the Supabase dashboard SQL editor:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('trade-images', 'trade-images', true);
 
+-- Enforce bucket level RLS policies for storage.objects
+CREATE POLICY "Users can upload trade images to their own folder"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'trade-images' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+CREATE POLICY "Users can read trade images in their own folder"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'trade-images' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+CREATE POLICY "Users can delete trade images in their own folder"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'trade-images' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+
 -- 7. Realtime Publication
 -- Drop the publication if it exists and recreate it for trades
 BEGIN;
