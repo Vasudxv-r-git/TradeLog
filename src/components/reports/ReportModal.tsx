@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Download, Calendar, FileText, Loader2 } from 'lucide-react';
 import { MONTHS } from '@/lib/constants';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +17,12 @@ export default function ReportModal({ onClose }: ReportModalProps) {
   const { user } = useAuth();
   const now = new Date();
 
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'monthly' | 'custom'>('monthly');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Monthly tab state
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
@@ -144,14 +150,21 @@ export default function ReportModal({ onClose }: ReportModalProps) {
     display: 'block',
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       onClick={onClose}
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
         background: 'var(--surface-overlay)',
-        zIndex: 400,
+        zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -418,6 +431,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
