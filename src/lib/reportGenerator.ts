@@ -7,6 +7,7 @@ interface GenerateReportOptions {
   title: string;
   subtitle: string;
   filename: string;
+  userName?: string;
   trades: Trade[];
 }
 
@@ -261,6 +262,7 @@ export function generateReportPDF(options: GenerateReportOptions): void {
 
   const tableBody = trades.map((t, idx) => [
     t.tradeNumber || String(idx + 1),
+    options.userName || '—',
     t.date || '—',
     t.day || '—',
     t.pair || '—',
@@ -277,6 +279,7 @@ export function generateReportPDF(options: GenerateReportOptions): void {
     head: [
       [
         '#',
+        'User Name',
         'Date',
         'Day',
         'Pair',
@@ -304,21 +307,22 @@ export function generateReportPDF(options: GenerateReportOptions): void {
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 8 },
-      1: { cellWidth: 22 },
-      2: { cellWidth: 14 },
-      3: { cellWidth: 20 },
-      4: { halign: 'center', cellWidth: 14 },
-      5: { halign: 'center', cellWidth: 18 },
-      6: { halign: 'right', cellWidth: 20 },
-      7: { halign: 'right', cellWidth: 18 },
-      8: { cellWidth: 24 },
-      9: { cellWidth: 'auto' },
+      1: { cellWidth: 20 },
+      2: { cellWidth: 22 },
+      3: { cellWidth: 14 },
+      4: { cellWidth: 20 },
+      5: { halign: 'center', cellWidth: 14 },
+      6: { halign: 'center', cellWidth: 18 },
+      7: { halign: 'right', cellWidth: 20 },
+      8: { halign: 'right', cellWidth: 18 },
+      9: { cellWidth: 24 },
+      10: { cellWidth: 'auto' },
     },
     didParseCell: (data) => {
       // Colorize Reward and Outcome
       if (data.section === 'body') {
         const rowData = trades[data.row.index];
-        if (data.column.index === 5) {
+        if (data.column.index === 6) {
           // Outcome
           if (rowData?.outcome === 'Profit') {
             data.cell.styles.textColor = [16, 185, 129];
@@ -328,7 +332,7 @@ export function generateReportPDF(options: GenerateReportOptions): void {
             data.cell.styles.fontStyle = 'bold';
           }
         }
-        if (data.column.index === 6) {
+        if (data.column.index === 7) {
           // Reward
           if (rowData?.reward !== null && rowData?.reward !== undefined) {
             if (rowData.reward >= 0) {
@@ -338,7 +342,7 @@ export function generateReportPDF(options: GenerateReportOptions): void {
             }
           }
         }
-        if (data.column.index === 7) {
+        if (data.column.index === 8) {
           // Commission
           data.cell.styles.textColor = [239, 68, 68];
         }

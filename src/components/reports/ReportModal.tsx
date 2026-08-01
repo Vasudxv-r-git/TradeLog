@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, Download, Calendar, FileText, Loader2 } from 'lucide-react';
 import { MONTHS } from '@/lib/constants';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchTrades, fetchTradesForDateRange, fetchAvailableYears } from '@/lib/database';
+import { fetchTrades, fetchTradesForDateRange, fetchAvailableYears, getUserProfile } from '@/lib/database';
 import { generateReportPDF } from '@/lib/reportGenerator';
 import DatePickerPopup from '@/components/fields/DatePickerPopup';
 
@@ -61,12 +61,15 @@ export default function ReportModal({ onClose }: ReportModalProps) {
     setErrorMsg(null);
     try {
       const trades = await fetchTrades(user.id, selectedYear, selectedMonth);
+      const profile = await getUserProfile(user.id);
+      const userName = profile?.displayName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown';
       const monthName = MONTHS[selectedMonth - 1];
 
       generateReportPDF({
         title: `Monthly Trading Report - ${monthName} ${selectedYear}`,
         subtitle: `Period: ${monthName} ${selectedYear}`,
         filename: `TradeLog_Report_${selectedYear}_${String(selectedMonth).padStart(2, '0')}.pdf`,
+        userName,
         trades,
       });
 
@@ -94,11 +97,14 @@ export default function ReportModal({ onClose }: ReportModalProps) {
     setErrorMsg(null);
     try {
       const trades = await fetchTradesForDateRange(user.id, startDate, endDate);
+      const profile = await getUserProfile(user.id);
+      const userName = profile?.displayName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown';
 
       generateReportPDF({
         title: `Trading Report (${startDate} to ${endDate})`,
         subtitle: `Period: ${startDate} to ${endDate}`,
         filename: `TradeLog_Report_${startDate}_to_${endDate}.pdf`,
+        userName,
         trades,
       });
 
