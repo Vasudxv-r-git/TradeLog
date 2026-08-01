@@ -145,37 +145,36 @@ export default function ReportModal({ onClose }: ReportModalProps) {
   };
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'var(--surface-overlay)',
-          zIndex: 400,
-          animation: 'fadeIn 0.2s ease',
-        }}
-      />
-
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'var(--surface-overlay)',
+        zIndex: 400,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        animation: 'fadeIn 0.2s ease',
+      }}
+    >
       {/* Modal Card */}
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
           width: '100%',
           maxWidth: 480,
+          maxHeight: '90vh',
           background: 'var(--surface-elevated)',
           border: '1px solid var(--border-default)',
           borderRadius: 16,
           boxShadow: 'var(--shadow-lg)',
-          zIndex: 410,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
+          overflowY: 'auto',
           animation: 'scaleIn 0.2s ease-out',
+          position: 'relative',
         }}
       >
         {/* Modal Header */}
@@ -419,6 +418,6 @@ export default function ReportModal({ onClose }: ReportModalProps) {
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
