@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, GripVertical, Settings2, RotateCcw, Check } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Trade, CustomColumn, CustomPair } from '@/types';
 import { DEFAULT_COLUMNS } from '@/lib/constants';
 import DatePickerPopup from '@/components/fields/DatePickerPopup';
@@ -33,6 +36,41 @@ const outcomeOptions = [
 ];
 const dayOptions = WEEKDAYS.map((d) => ({ label: d, value: d }));
 
+function SortableItem({ id, isRearranging, children }: { id: string, isRearranging: boolean, children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    display: isRearranging ? 'flex' : 'block',
+    gap: 16,
+    alignItems: 'center',
+    background: isRearranging ? 'var(--bg-secondary)' : 'transparent',
+    padding: isRearranging ? '16px' : '0',
+    borderRadius: '12px',
+    border: isRearranging ? '1px dashed var(--border-default)' : 'none',
+    position: 'relative' as const,
+    zIndex: isDragging ? 1 : 0,
+    boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : 'none',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      {isRearranging && (
+        <div 
+          {...attributes} 
+          {...listeners} 
+          style={{ cursor: 'grab', padding: '4px', color: 'var(--text-tertiary)' }}
+        >
+          <GripVertical size={20} />
+        </div>
+      )}
+      <div style={{ flex: 1 }}>{children}</div>
+    </div>
+  );
+}
+
 export default function TradePanel({ customColumns, customPairs, hiddenColumns, hiddenPairs, onAddPair, onDeletePair, onSave, onClose, editingTrade }: TradePanelProps) {
   const isEditing = !!editingTrade;
   const [trade, setTrade] = useState<Partial<Trade>>(
@@ -45,6 +83,65 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [isRearranging, setIsRearranging] = useState(false);
+  const DEFAULT_SECTION_ORDER = [
+    'date',
+    'pair',
+    'directionOutcome',
+    'financials',
+    'entryModel',
+    'images',
+    'remarks',
+    'customColumns'
+  ];
+  const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('newTradePanelSectionOrder');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSectionOrder(Array.from(new Set([...parsed, ...DEFAULT_SECTION_ORDER])));
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setSectionOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const toggleRearrange = () => {
+    if (isRearranging) {
+      localStorage.setItem('newTradePanelSectionOrder', JSON.stringify(sectionOrder));
+      setIsRearranging(false);
+    } else {
+      setIsRearranging(true);
+    }
+  };
+
+  const resetOrder = () => {
+    setSectionOrder(DEFAULT_SECTION_ORDER);
+    localStorage.removeItem('newTradePanelSectionOrder');
+  };
 
   // Raw string state for the reward input so "-" can be typed freely
   const [rewardInput, setRewardInput] = useState<string>(
@@ -161,6 +258,114 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
 
   const imagesLabel = DEFAULT_COLUMNS.find(c => c.key === 'images')?.label || "IMAGE'S LINK";
 
+  const sectionContents: Record<string, React.ReactNode> = {
+    date: isVisible('date') ? (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ position: 'relative' }}>
+          <label style={labelStyle}>Date</label>
+          <button onClick={() => setShowDatePicker(!showDatePicker)} style={{ ...inputStyle, textAlign: 'left', cursor: 'pointer', color: trade.date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>{trade.date || 'Pick date'}</button>
+          {showDatePicker && <DatePickerPopup value={trade.date || ''} onChange={(date, day) => { handleUpdate({ date, day }); setShowDatePicker(false); }} onClose={() => setShowDatePicker(false)} />}
+        </div>
+        {isVisible('day') && (
+          <div>
+            <label style={labelStyle}>Day</label>
+            <div style={{ ...inputStyle, padding: '6px 6px' }}>
+              <SelectField value={trade.day || ''} options={dayOptions} placeholder="Day" onChange={(day) => handleUpdate({ day })} />
+            </div>
+          </div>
+        )}
+      </div>
+    ) : null,
+    pair: isVisible('pair') ? (
+      <div>
+        <label style={labelStyle}>Pair</label>
+        <div style={{ ...inputStyle, padding: '6px 6px' }}>
+          <PairSelect value={trade.pair || ''} customPairs={customPairs} hiddenPairs={hiddenPairs} onChange={(pair) => handleUpdate({ pair })} onAddPair={onAddPair} onDeletePair={onDeletePair} />
+        </div>
+      </div>
+    ) : null,
+    directionOutcome: (isVisible('direction') || isVisible('outcome')) ? (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {isVisible('direction') && (
+          <div>
+            <label style={labelStyle}>Direction</label>
+            <div style={{ ...inputStyle, padding: '6px 6px' }}>
+              <SelectField value={trade.direction || ''} options={directionOptions} placeholder="Direction" onChange={(v) => handleUpdate({ direction: v as any })} />
+            </div>
+          </div>
+        )}
+        {isVisible('outcome') && (
+          <div>
+            <label style={labelStyle}>Outcome</label>
+            <div style={{ ...inputStyle, padding: '6px 6px' }}>
+              <SelectField value={trade.outcome || ''} options={outcomeOptions} placeholder="Outcome" onChange={(v) => handleOutcomeChange(v)} />
+            </div>
+          </div>
+        )}
+      </div>
+    ) : null,
+    financials: (isVisible('reward') || isVisible('commission')) ? (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {isVisible('reward') && (
+          <div>
+            <label style={labelStyle}>Reward ($)</label>
+            <input
+              style={{ ...inputStyle, color: trade.reward !== null && trade.reward !== undefined ? (trade.reward >= 0 ? 'var(--success-text)' : 'var(--danger-text)') : 'var(--text-primary)' }}
+              type="text"
+              value={rewardInput}
+              onChange={(e) => handleRewardInputChange(e.target.value)}
+              onBlur={handleRewardBlur}
+              placeholder="0.00"
+            />
+          </div>
+        )}
+        {isVisible('commission') && (
+          <div>
+            <label style={labelStyle}>Commission ($)</label>
+            <input
+              style={{ ...inputStyle, color: 'var(--danger-text)' }}
+              type="text"
+              value={commissionInput}
+              onChange={(e) => handleCommissionInputChange(e.target.value)}
+              onBlur={handleCommissionBlur}
+              placeholder="-0.00"
+            />
+          </div>
+        )}
+      </div>
+    ) : null,
+    entryModel: isVisible('entryModel') ? (
+      <div>
+        <label style={labelStyle}>Entry Model</label>
+        <input style={inputStyle} value={trade.entryModel || ''} onChange={(e) => handleUpdate({ entryModel: e.target.value })} placeholder="e.g., Breakout, Pullback" />
+      </div>
+    ) : null,
+    images: isVisible('images') ? (
+      <div>
+        <label style={labelStyle}>{imagesLabel}</label>
+        <ImageUpload value={trade.images || []} onChange={(images) => handleUpdate({ images })} />
+      </div>
+    ) : null,
+    remarks: isVisible('remarks') ? (
+      <div>
+        <label style={labelStyle}>Remarks</label>
+        <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: 90, lineHeight: 1.5 }} value={trade.remarks || ''} onChange={(e) => handleUpdate({ remarks: e.target.value })} placeholder="Trade notes, observations, lessons learned..." />
+      </div>
+    ) : null,
+    customColumns: customColumns.filter((col) => isVisible(col.key)).length > 0 ? (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {customColumns.filter((col) => isVisible(col.key)).map((col) => (
+          <div key={col.key}>
+            <label style={labelStyle}>{col.name}</label>
+            <input style={inputStyle} value={trade.customFields?.[col.key] || ''} onChange={(e) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: e.target.value } })} placeholder="—" />
+          </div>
+        ))}
+      </div>
+    ) : null,
+  };
+
+  const activeOrder = sectionOrder.filter(key => sectionContents[key] !== null);
+
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--surface-overlay)', zIndex: 400, animation: 'fadeIn 0.2s ease' }} />
@@ -171,131 +376,33 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
             <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary)' }}>{isEditing ? 'Edit Trade' : 'New Trade'}</h2>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', marginTop: 2 }}>{isEditing ? 'Modify the trade details below' : 'Fill in the details below'}</p>
           </div>
-          <button onClick={onClose} style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}><X size={18} /></button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {isRearranging && (
+              <button onClick={resetOrder} title="Reset Order" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+                <RotateCcw size={18} />
+              </button>
+            )}
+            <button onClick={toggleRearrange} title={isRearranging ? "Save Order" : "Rearrange Sections"} style={{ background: isRearranging ? 'var(--primary-color)' : 'var(--bg-tertiary)', border: '1px solid', borderColor: isRearranging ? 'var(--primary-color)' : 'var(--border-default)', borderRadius: 8, cursor: 'pointer', color: isRearranging ? '#fff' : 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+              {isRearranging ? <Check size={18} /> : <Settings2 size={18} />}
+            </button>
+            <button onClick={onClose} title="Close" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Form Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
           <div style={sectionStyle}>
-            {/* Section: Date */}
-            {isVisible('date') && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div style={{ position: 'relative' }}>
-                  <label style={labelStyle}>Date</label>
-                  <button onClick={() => setShowDatePicker(!showDatePicker)} style={{ ...inputStyle, textAlign: 'left', cursor: 'pointer', color: trade.date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>{trade.date || 'Pick date'}</button>
-                  {showDatePicker && <DatePickerPopup value={trade.date || ''} onChange={(date, day) => { handleUpdate({ date, day }); setShowDatePicker(false); }} onClose={() => setShowDatePicker(false)} />}
-                </div>
-                {isVisible('day') && (
-                  <div>
-                    <label style={labelStyle}>Day</label>
-                    <div style={{ ...inputStyle, padding: '6px 6px' }}>
-                      <SelectField value={trade.day || ''} options={dayOptions} placeholder="Day" onChange={(day) => handleUpdate({ day })} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Section: Pair */}
-            {isVisible('pair') && (
-              <div>
-                <label style={labelStyle}>Pair</label>
-                <div style={{ ...inputStyle, padding: '6px 6px' }}>
-                  <PairSelect value={trade.pair || ''} customPairs={customPairs} hiddenPairs={hiddenPairs} onChange={(pair) => handleUpdate({ pair })} onAddPair={onAddPair} onDeletePair={onDeletePair} />
-                </div>
-              </div>
-            )}
-
-            <div style={dividerStyle} />
-
-            {/* Section: Direction & Outcome */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {isVisible('direction') && (
-                <div>
-                  <label style={labelStyle}>Direction</label>
-                  <div style={{ ...inputStyle, padding: '6px 6px' }}>
-                    <SelectField value={trade.direction || ''} options={directionOptions} placeholder="Direction" onChange={(v) => handleUpdate({ direction: v as any })} />
-                  </div>
-                </div>
-              )}
-              {isVisible('outcome') && (
-                <div>
-                  <label style={labelStyle}>Outcome</label>
-                  <div style={{ ...inputStyle, padding: '6px 6px' }}>
-                    <SelectField value={trade.outcome || ''} options={outcomeOptions} placeholder="Outcome" onChange={(v) => handleOutcomeChange(v)} />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Section: Financials */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {isVisible('reward') && (
-                <div>
-                  <label style={labelStyle}>Reward ($)</label>
-                  <input
-                    style={{ ...inputStyle, color: trade.reward !== null && trade.reward !== undefined ? (trade.reward >= 0 ? 'var(--success-text)' : 'var(--danger-text)') : 'var(--text-primary)' }}
-                    type="text"
-                    value={rewardInput}
-                    onChange={(e) => handleRewardInputChange(e.target.value)}
-                    onBlur={handleRewardBlur}
-                    placeholder="0.00"
-                  />
-                </div>
-              )}
-              {isVisible('commission') && (
-                <div>
-                  <label style={labelStyle}>Commission ($)</label>
-                  <input
-                    style={{ ...inputStyle, color: 'var(--danger-text)' }}
-                    type="text"
-                    value={commissionInput}
-                    onChange={(e) => handleCommissionInputChange(e.target.value)}
-                    onBlur={handleCommissionBlur}
-                    placeholder="-0.00"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div style={dividerStyle} />
-
-            {/* Section: Details */}
-            {isVisible('entryModel') && (
-              <div>
-                <label style={labelStyle}>Entry Model</label>
-                <input style={inputStyle} value={trade.entryModel || ''} onChange={(e) => handleUpdate({ entryModel: e.target.value })} placeholder="e.g., Breakout, Pullback" />
-              </div>
-            )}
-
-            {isVisible('images') && (
-              <div>
-                <label style={labelStyle}>{imagesLabel}</label>
-                <ImageUpload value={trade.images || []} onChange={(images) => handleUpdate({ images })} />
-              </div>
-            )}
-
-            {isVisible('remarks') && (
-              <div>
-                <label style={labelStyle}>Remarks</label>
-                <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: 90, lineHeight: 1.5 }} value={trade.remarks || ''} onChange={(e) => handleUpdate({ remarks: e.target.value })} placeholder="Trade notes, observations, lessons learned..." />
-              </div>
-            )}
-
-            {/* Custom Columns */}
-            {customColumns.filter((col) => isVisible(col.key)).length > 0 && (
-              <>
-                <div style={dividerStyle} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  {customColumns.filter((col) => isVisible(col.key)).map((col) => (
-                    <div key={col.key}>
-                      <label style={labelStyle}>{col.name}</label>
-                      <input style={inputStyle} value={trade.customFields?.[col.key] || ''} onChange={(e) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: e.target.value } })} placeholder="—" />
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={activeOrder} strategy={verticalListSortingStrategy}>
+                {activeOrder.map((key) => (
+                  <SortableItem key={key} id={key} isRearranging={isRearranging}>
+                    {sectionContents[key]}
+                  </SortableItem>
+                ))}
+              </SortableContext>
+            </DndContext>
           </div>
         </div>
 
