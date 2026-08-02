@@ -23,6 +23,7 @@ function DashboardContent({
   onAddColumn,
   onUpdateColumn,
   onAddPair,
+  onDeletePair,
   onDeleteColumn,
   sectionOrder,
   onUpdateSectionOrder,
@@ -35,6 +36,7 @@ function DashboardContent({
   onAddColumn: (col: CustomColumn) => void;
   onUpdateColumn: (col: CustomColumn) => void;
   onAddPair: (pair: CustomPair) => void;
+  onDeletePair: (pairSymbol: string) => void;
   onDeleteColumn: (colKey: string) => void;
   sectionOrder: string[];
   onUpdateSectionOrder: (order: string[]) => void;
@@ -93,6 +95,7 @@ function DashboardContent({
           sectionOrder={sectionOrder}
           onUpdateSectionOrder={onUpdateSectionOrder}
           onAddPair={onAddPair}
+          onDeletePair={onDeletePair}
           onAddCustomColumn={onAddColumn}
           onUpdateCustomColumn={onUpdateColumn}
           onDeleteCustomColumn={onDeleteColumn}
@@ -110,6 +113,7 @@ function DashboardContent({
           sectionOrder={sectionOrder}
           onUpdateSectionOrder={onUpdateSectionOrder}
           onAddPair={onAddPair}
+          onDeletePair={onDeletePair}
           onAddCustomColumn={onAddColumn}
           onUpdateCustomColumn={onUpdateColumn}
           onDeleteCustomColumn={onDeleteColumn}
@@ -194,6 +198,17 @@ export default function DashboardPage() {
     [user]
   );
 
+  const handleDeletePair = useCallback(
+    async (pairSymbol: string) => {
+      const isCustom = customPairs.some((p) => p.symbol === pairSymbol);
+      if (isCustom && user) {
+        await removeCustomPair(user.id, pairSymbol);
+        setCustomPairs((prev) => prev.filter((p) => p.symbol !== pairSymbol));
+      }
+    },
+    [user, customPairs]
+  );
+
   const handleDeleteColumn = useCallback(
     async (columnKey: string) => {
       const isCustom = customColumns.some((c) => c.key === columnKey);
@@ -236,6 +251,7 @@ export default function DashboardPage() {
           onAddColumn={handleAddColumn}
           onUpdateColumn={handleUpdateColumn}
           onAddPair={handleAddPair}
+          onDeletePair={handleDeletePair}
           onDeleteColumn={handleDeleteColumn}
           sectionOrder={sectionOrder}
           onUpdateSectionOrder={handleUpdateSectionOrder}

@@ -9,9 +9,10 @@ interface EditableSelectFieldProps {
   placeholder?: string;
   onChange: (value: string) => void;
   onAddOption: (option: string) => void;
+  onDeleteOption?: (option: string) => void;
 }
 
-export default function EditableSelectField({ value, options, placeholder = 'Select', onChange, onAddOption }: EditableSelectFieldProps) {
+export default function EditableSelectField({ value, options, placeholder = 'Select', onChange, onAddOption, onDeleteOption }: EditableSelectFieldProps) {
   const [open, setOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newOption, setNewOption] = useState('');
@@ -87,20 +88,38 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
           )}
           
           {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => { onChange(opt); setOpen(false); }}
-              style={{
-                display: 'block', width: '100%', padding: '8px 10px', textAlign: 'left',
-                fontSize: '0.8125rem', color: 'var(--text-secondary)', borderRadius: 4,
-                cursor: 'pointer', border: 'none', background: opt === value ? 'var(--accent-light)' : 'transparent',
-                fontWeight: opt === value ? 500 : 400, transition: 'all 0.1s ease',
-                wordBreak: 'break-word'
-              }}
-            >
-              {opt}
-            </button>
+            <div key={opt} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => { onChange(opt); setOpen(false); }}
+                style={{
+                  flex: 1, padding: '8px 10px', paddingRight: onDeleteOption ? '32px' : '10px', textAlign: 'left',
+                  fontSize: '0.8125rem', color: 'var(--text-secondary)', borderRadius: 4,
+                  cursor: 'pointer', border: 'none', background: opt === value ? 'var(--accent-light)' : 'transparent',
+                  fontWeight: opt === value ? 500 : 400, transition: 'all 0.1s ease',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {opt}
+              </button>
+              {onDeleteOption && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onDeleteOption(opt); }}
+                  style={{
+                    position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'transparent', border: 'none', color: 'var(--text-tertiary)',
+                    padding: '4px', borderRadius: 4, cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger-text)'; e.currentTarget.style.background = 'var(--danger-bg)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.background = 'transparent'; }}
+                  title="Delete Option"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
           ))}
 
           <div style={{ borderTop: '1px solid var(--border-default)', marginTop: 4, paddingTop: 4 }}>

@@ -20,6 +20,7 @@ interface TradePanelProps {
   customPairs: CustomPair[];
   hiddenColumns: Set<string>;
   onAddPair: (pair: CustomPair) => void;
+  onDeletePair: (pairSymbol: string) => void;
   onAddCustomColumn: (column: CustomColumn) => void;
   onUpdateCustomColumn: (column: CustomColumn) => void;
   onDeleteCustomColumn: (colKey: string) => void;
@@ -76,7 +77,7 @@ function SortableItem({ id, isRearranging, children }: { id: string, isRearrangi
   );
 }
 
-export default function TradePanel({ customColumns, customPairs, hiddenColumns, onAddPair, onAddCustomColumn, onUpdateCustomColumn, onDeleteCustomColumn, sectionOrder, onUpdateSectionOrder, onSave, onClose, editingTrade }: TradePanelProps) {
+export default function TradePanel({ customColumns, customPairs, hiddenColumns, onAddPair, onDeletePair, onAddCustomColumn, onUpdateCustomColumn, onDeleteCustomColumn, sectionOrder, onUpdateSectionOrder, onSave, onClose, editingTrade }: TradePanelProps) {
   const isEditing = !!editingTrade;
   const [trade, setTrade] = useState<Partial<Trade>>(
     editingTrade
@@ -136,6 +137,17 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
   );
 
   const handleUpdate = (updates: Partial<Trade>) => setTrade((prev) => ({ ...prev, ...updates }));
+
+  // Auto-calculate day when date changes and day is missing
+  useEffect(() => {
+    if (trade.date && !trade.day) {
+      const parts = trade.date.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        handleUpdate({ day: WEEKDAYS[d.getDay()] });
+      }
+    }
+  }, [trade.date, trade.day]);
 
   // When outcome changes, auto-flip the reward sign to match
   const handleOutcomeChange = (newOutcome: string) => {
@@ -253,8 +265,8 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
         {isVisible('day') && (
           <div>
             <label style={labelStyle}>Day</label>
-            <div style={{ ...inputStyle, padding: '6px 6px' }}>
-              <SelectField value={trade.day || ''} options={dayOptions} placeholder="Day" onChange={(day) => handleUpdate({ day })} />
+            <div style={{ ...inputStyle, background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)', cursor: 'not-allowed', opacity: 0.8 }}>
+              {trade.day || 'Auto-filled'}
             </div>
           </div>
         )}
@@ -269,6 +281,7 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
             options={customPairs.map(p => p.symbol)}
             onChange={(pair) => handleUpdate({ pair })}
             onAddOption={(newOption) => onAddPair({ symbol: newOption, category: 'Custom' })}
+            onDeleteOption={(delOption) => onDeletePair(delOption)}
             placeholder="Select or Add Pair"
           />
         </div>
@@ -366,6 +379,7 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
                     options={col.options || []}
                     onChange={(newVal) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: newVal } })}
                     onAddOption={(newOption) => onUpdateCustomColumn({ ...col, options: [...(col.options || []), newOption] })}
+                    onDeleteOption={(delOption) => onUpdateCustomColumn({ ...col, options: col.options?.filter(o => o !== delOption) || [] })}
                   />
                 </div>
               ) : (
