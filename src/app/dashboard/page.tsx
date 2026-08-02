@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMonthYear } from '@/hooks/useMonthYear';
 import { TradesProvider, useTrades } from '@/hooks/useTrades';
 import { Trade, CustomColumn, CustomPair } from '@/types';
-import { getUserProfile, addCustomPair, addCustomColumn, addTrade, updateTrade as updateTradeInDb, removeCustomColumn } from '@/lib/database';
+import { getUserProfile, addCustomPair, addCustomColumn, addTrade, updateTrade as updateTradeInDb, removeCustomColumn, updateCustomColumn } from '@/lib/database';
 import MonthYearSelector from '@/components/overview/MonthYearSelector';
 import TradeGrid from '@/components/journal/TradeGrid';
 import MonthlyOverview from '@/components/overview/MonthlyOverview';
@@ -22,9 +22,12 @@ function DashboardContent({
   hiddenColumns,
   hiddenPairs,
   onAddColumn,
+  onUpdateColumn,
   onAddPair,
   onDeleteColumn,
   onDeletePair,
+  sectionOrder,
+  onUpdateSectionOrder,
 }: {
   year: number;
   month: number;
@@ -33,9 +36,12 @@ function DashboardContent({
   hiddenColumns: Set<string>;
   hiddenPairs: Set<string>;
   onAddColumn: (col: CustomColumn) => void;
+  onUpdateColumn: (col: CustomColumn) => void;
   onAddPair: (pair: CustomPair) => void;
   onDeleteColumn: (colKey: string) => void;
   onDeletePair: (pairSymbol: string) => void;
+  sectionOrder: string[];
+  onUpdateSectionOrder: (order: string[]) => void;
 }) {
   const { user } = useAuth();
   const { trades, refreshTrades } = useTrades();
@@ -77,10 +83,8 @@ function DashboardContent({
       {/* 3. Trades Grid (Single Source of Truth — read-only cells) */}
       <TradeGrid
         customColumns={customColumns}
-        customPairs={customPairs}
         hiddenColumns={hiddenColumns}
-        onAddCustomPair={onAddPair}
-        onDeleteColumn={onDeleteColumn}
+        sectionOrder={sectionOrder}
         onEditTrade={(trade) => setEditingTrade(trade)}
       />
 
@@ -91,9 +95,13 @@ function DashboardContent({
           customPairs={customPairs}
           hiddenColumns={hiddenColumns}
           hiddenPairs={hiddenPairs}
+          sectionOrder={sectionOrder}
+          onUpdateSectionOrder={onUpdateSectionOrder}
           onAddPair={onAddPair}
           onDeletePair={onDeletePair}
           onAddCustomColumn={onAddColumn}
+          onUpdateCustomColumn={onUpdateColumn}
+          onDeleteCustomColumn={onDeleteColumn}
           onSave={handleSaveNewTrade}
           onClose={() => setShowNewTrade(false)}
         />
@@ -106,9 +114,13 @@ function DashboardContent({
           customPairs={customPairs}
           hiddenColumns={hiddenColumns}
           hiddenPairs={hiddenPairs}
+          sectionOrder={sectionOrder}
+          onUpdateSectionOrder={onUpdateSectionOrder}
           onAddPair={onAddPair}
           onDeletePair={onDeletePair}
           onAddCustomColumn={onAddColumn}
+          onUpdateCustomColumn={onUpdateColumn}
+          onDeleteCustomColumn={onDeleteColumn}
           onSave={handleSaveEditedTrade}
           onClose={() => setEditingTrade(null)}
           editingTrade={editingTrade}
@@ -125,6 +137,9 @@ export default function DashboardPage() {
   const [customPairs, setCustomPairs] = useState<CustomPair[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [hiddenPairs, setHiddenPairs] = useState<Set<string>>(new Set());
+  
+  const DEFAULT_SECTION_ORDER = ['date', 'pair', 'directionOutcome', 'financials', 'entryModel', 'images', 'remarks', 'customColumns'];
+  const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
 
   useEffect(() => {
     if (!user) return;
@@ -142,7 +157,22 @@ export default function DashboardPage() {
     if (savedPairs) {
       try { setHiddenPairs(new Set(JSON.parse(savedPairs))); } catch {}
     }
+    
+    const savedOrder = localStorage.getItem('tradelog_section_order') || localStorage.getItem('newTradePanelSectionOrder');
+    if (savedOrder) {
+      try {
+        const parsed = JSON.parse(savedOrder);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSectionOrder(Array.from(new Set([...parsed, ...DEFAULT_SECTION_ORDER])));
+        }
+      } catch {}
+    }
   }, [user]);
+
+  const handleUpdateSectionOrder = useCallback((newOrder: string[]) => {
+    setSectionOrder(newOrder);
+    localStorage.setItem('tradelog_section_order', JSON.stringify(newOrder));
+  }, []);
 
   const handleAddColumn = useCallback(
     async (column: CustomColumn) => {
@@ -155,6 +185,15 @@ export default function DashboardPage() {
         localStorage.setItem('tradelog_hidden_columns', JSON.stringify([...next]));
         return next;
       });
+    },
+    [user]
+  );
+
+  const handleUpdateColumn = useCallback(
+    async (column: CustomColumn) => {
+      if (!user) return;
+      await updateCustomColumn(user.id, column);
+      setCustomColumns((prev) => prev.map((c) => (c.key === column.key ? column : c)));
     },
     [user]
   );
@@ -232,9 +271,12 @@ export default function DashboardPage() {
           hiddenColumns={hiddenColumns}
           hiddenPairs={hiddenPairs}
           onAddColumn={handleAddColumn}
+          onUpdateColumn={handleUpdateColumn}
           onAddPair={handleAddPair}
           onDeleteColumn={handleDeleteColumn}
           onDeletePair={handleDeletePair}
+          sectionOrder={sectionOrder}
+          onUpdateSectionOrder={handleUpdateSectionOrder}
         />
       </TradesProvider>
     </div>

@@ -13,6 +13,8 @@ import SelectField from '@/components/fields/SelectField';
 import ImageUpload from '@/components/fields/ImageUpload';
 import { WEEKDAYS } from '@/lib/constants';
 import AddColumnModal from '@/components/journal/AddColumnModal';
+import DeleteColumnModal from '@/components/journal/DeleteColumnModal';
+import EditableSelectField from '@/components/fields/EditableSelectField';
 
 interface TradePanelProps {
   customColumns: CustomColumn[];
@@ -22,6 +24,10 @@ interface TradePanelProps {
   onAddPair: (pair: CustomPair) => void;
   onDeletePair: (pairSymbol: string) => void;
   onAddCustomColumn: (column: CustomColumn) => void;
+  onUpdateCustomColumn: (column: CustomColumn) => void;
+  onDeleteCustomColumn: (colKey: string) => void;
+  sectionOrder: string[];
+  onUpdateSectionOrder: (order: string[]) => void;
   onSave: (trade: Partial<Trade>) => void;
   onClose: () => void;
   /** If provided, the panel is in "Edit" mode with pre-filled values */
@@ -73,7 +79,7 @@ function SortableItem({ id, isRearranging, children }: { id: string, isRearrangi
   );
 }
 
-export default function TradePanel({ customColumns, customPairs, hiddenColumns, hiddenPairs, onAddPair, onDeletePair, onAddCustomColumn, onSave, onClose, editingTrade }: TradePanelProps) {
+export default function TradePanel({ customColumns, customPairs, hiddenColumns, hiddenPairs, onAddPair, onDeletePair, onAddCustomColumn, onUpdateCustomColumn, onDeleteCustomColumn, sectionOrder, onUpdateSectionOrder, onSave, onClose, editingTrade }: TradePanelProps) {
   const isEditing = !!editingTrade;
   const [trade, setTrade] = useState<Partial<Trade>>(
     editingTrade
@@ -85,6 +91,7 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showAddColumn, setShowAddColumn] = useState(false);
+  const [showDeleteColumn, setShowDeleteColumn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [isRearranging, setIsRearranging] = useState(false);
@@ -98,21 +105,6 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
     'remarks',
     'customColumns'
   ];
-  const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('newTradePanelSectionOrder');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSectionOrder(Array.from(new Set([...parsed, ...DEFAULT_SECTION_ORDER])));
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
-  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -124,26 +116,18 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setSectionOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over.id as string);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      const oldIndex = sectionOrder.indexOf(active.id as string);
+      const newIndex = sectionOrder.indexOf(over.id as string);
+      onUpdateSectionOrder(arrayMove(sectionOrder, oldIndex, newIndex));
     }
   };
 
   const toggleRearrange = () => {
-    if (isRearranging) {
-      localStorage.setItem('newTradePanelSectionOrder', JSON.stringify(sectionOrder));
-      setIsRearranging(false);
-    } else {
-      setIsRearranging(true);
-    }
+    setIsRearranging(!isRearranging);
   };
 
   const resetOrder = () => {
-    setSectionOrder(DEFAULT_SECTION_ORDER);
-    localStorage.removeItem('newTradePanelSectionOrder');
+    onUpdateSectionOrder(DEFAULT_SECTION_ORDER);
   };
 
   // Raw string state for the reward input so "-" can be typed freely
@@ -357,12 +341,38 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
     ) : null,
     customColumns: customColumns.filter((col) => isVisible(col.key)).length > 0 ? (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {customColumns.filter((col) => isVisible(col.key)).map((col) => (
-          <div key={col.key}>
-            <label style={labelStyle}>{col.name}</label>
-            <input style={inputStyle} value={trade.customFields?.[col.key] || ''} onChange={(e) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: e.target.value } })} placeholder="—" />
-          </div>
-        ))}
+        {customColumns.filter((col) => isVisible(col.key)).map((col) => {
+          const val = trade.customFields?.[col.key];
+          const valueStr = val !== undefined ? String(val) : '';
+          
+          return (
+            <div key={col.key}>
+              <label style={labelStyle}>{col.name}</label>
+              {col.type === 'number' ? (
+                <input
+                  style={inputStyle}
+                  type="number"
+                  value={valueStr}
+                  onChange={(e) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: e.target.value ? Number(e.target.value) : '' } })}
+                  placeholder="0"
+                />
+              ) : col.type === 'dropdown' ? (
+                <EditableSelectField
+                  value={valueStr}
+                  options={col.options || []}
+                  onChange={(newVal) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: newVal } })}
+                  onAddOption={(newOption) => onUpdateCustomColumn({ ...col, options: [...(col.options || []), newOption] })}
+                />
+              ) : (
+                <input
+                  style={inputStyle}
+                  value={valueStr}
+                  onChange={(e) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: e.target.value } })}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     ) : null,
   };
@@ -381,9 +391,16 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {!isRearranging && (
-              <button onClick={() => setShowAddColumn(true)} title="Add Column" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
-                <Columns3 size={18} />
-              </button>
+              <>
+                <button onClick={() => setShowAddColumn(true)} title="Add Column" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+                  <Columns3 size={18} />
+                </button>
+                {customColumns.length > 0 && (
+                  <button onClick={() => setShowDeleteColumn(true)} title="Delete Column" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--danger-text)', display: 'flex', padding: 8 }}>
+                    <X size={18} />
+                  </button>
+                )}
+              </>
             )}
             {isRearranging && (
               <button onClick={resetOrder} title="Reset Order" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
@@ -436,6 +453,14 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
         <AddColumnModal
           onClose={() => setShowAddColumn(false)}
           onAdd={(col) => { onAddCustomColumn(col); setShowAddColumn(false); }}
+        />
+      )}
+
+      {showDeleteColumn && (
+        <DeleteColumnModal
+          customColumns={customColumns}
+          onClose={() => setShowDeleteColumn(false)}
+          onDelete={(colKey) => { onDeleteCustomColumn(colKey); setShowDeleteColumn(false); }}
         />
       )}
       <style dangerouslySetInnerHTML={{__html: `

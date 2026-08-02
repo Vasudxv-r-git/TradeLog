@@ -12,12 +12,11 @@ interface AddColumnModalProps {
 export default function AddColumnModal({ onAdd, onClose }: AddColumnModalProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<'text' | 'number' | 'dropdown'>('text');
-  const [optionsStr, setOptionsStr] = useState('');
 
   const handleSubmit = () => {
     if (!name.trim()) return;
     const key = `custom_${name.trim().toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`;
-    const column: CustomColumn = { key, name: name.trim(), type, ...(type === 'dropdown' ? { options: optionsStr.split(',').map((o) => o.trim()).filter(Boolean) } : {}) };
+    const column: CustomColumn = { key, name: name.trim(), type, ...(type === 'dropdown' ? { options: [] } : {}) };
     onAdd(column);
   };
 
@@ -43,12 +42,6 @@ export default function AddColumnModal({ onAdd, onClose }: AddColumnModalProps) 
               <option value="dropdown">Dropdown</option>
             </select>
           </div>
-          {type === 'dropdown' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Options (comma-separated)</label>
-              <input style={inputStyle} placeholder="e.g., 1H, 4H, Daily" value={optionsStr} onChange={(e) => setOptionsStr(e.target.value)} />
-            </div>
-          )}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '0 24px 20px' }}>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>

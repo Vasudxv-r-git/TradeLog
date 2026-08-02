@@ -6,23 +6,19 @@ import { DEFAULT_COLUMNS } from '@/lib/constants';
 import { Trade, CustomColumn, CustomPair, ColumnDef } from '@/types';
 import TradeRow from './TradeRow';
 import EmptyState from '@/components/layout/EmptyState';
-import { X, Pencil, Check, RotateCcw } from 'lucide-react';
+import { Pencil, Check, RotateCcw } from 'lucide-react';
 
 interface TradeGridProps {
   customColumns: CustomColumn[];
-  customPairs: CustomPair[];
   hiddenColumns: Set<string>;
-  onAddCustomPair: (pair: CustomPair) => void;
-  onDeleteColumn: (columnKey: string) => void;
+  sectionOrder: string[];
   onEditTrade: (trade: Trade) => void;
 }
 
-export default function TradeGrid({ customColumns, customPairs, hiddenColumns, onAddCustomPair, onDeleteColumn, onEditTrade }: TradeGridProps) {
+export default function TradeGrid({ customColumns, hiddenColumns, sectionOrder, onEditTrade }: TradeGridProps) {
   const { trades, loading, deleteTrade } = useTrades();
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
-  const [confirmDeleteCol, setConfirmDeleteCol] = useState<string | null>(null);
   const [confirmDeleteTrade, setConfirmDeleteTrade] = useState<string | null>(null);
-  const [hoveredCol, setHoveredCol] = useState<string | null>(null);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [colWidths, setColWidths] = useState<Record<string, number>>({});
@@ -87,13 +83,47 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
     localStorage.removeItem('tradeGridColWidths');
   };
 
-  const allColumns: ColumnDef[] = [
+  // Map NewTradePanel section keys to TradeGrid column keys
+  const SECTION_TO_COLUMNS: Record<string, string[]> = {
+    date: ['date', 'day'],
+    pair: ['pair'],
+    directionOutcome: ['direction', 'outcome'],
+    financials: ['reward', 'commission'],
+    entryModel: ['entryModel'],
+    images: ['images'],
+    remarks: ['remarks'],
+    // customColumns is handled dynamically below
+  };
+
+  const orderedColKeys = sectionOrder.flatMap(section => 
+    section === 'customColumns' 
+      ? customColumns.map(c => c.key)
+      : (SECTION_TO_COLUMNS[section] || [section])
+  );
+
+  const baseColumns: ColumnDef[] = [
     ...DEFAULT_COLUMNS,
     ...customColumns.map((cc) => ({ key: cc.key, label: cc.name, type: cc.type as ColumnDef['type'], width: '140px', options: cc.options })),
-  ].filter((col) => !hiddenColumns.has(col.key)).map((col) => ({
-    ...col,
-    width: colWidths[col.key] ? `${colWidths[col.key]}px` : col.width
-  }));
+  ].filter((col) => !hiddenColumns.has(col.key));
+
+  const allColumns: ColumnDef[] = baseColumns
+    .sort((a, b) => {
+      const indexA = orderedColKeys.indexOf(a.key);
+      const indexB = orderedColKeys.indexOf(b.key);
+      
+      // If both are missing from orderedColKeys, keep original order
+      if (indexA === -1 && indexB === -1) return 0;
+      // If a is missing, push it to the end
+      if (indexA === -1) return 1;
+      // If b is missing, push it to the end
+      if (indexB === -1) return -1;
+      
+      return indexA - indexB;
+    })
+    .map((col) => ({
+      ...col,
+      width: colWidths[col.key] ? `${colWidths[col.key]}px` : col.width
+    }));
 
   const handleDeleteRow = async (tradeId: string) => {
     setRemovingIds((prev) => new Set(prev).add(tradeId));
@@ -101,11 +131,6 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
       await deleteTrade(tradeId);
       setRemovingIds((prev) => { const next = new Set(prev); next.delete(tradeId); return next; });
     }, 200);
-  };
-
-  const handleConfirmDeleteColumn = (colKey: string) => {
-    onDeleteColumn(colKey);
-    setConfirmDeleteCol(null);
   };
 
   if (loading) {
@@ -147,26 +172,8 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
                 <div
                   key={col.key}
                   style={{ ...headerCellStyle, width: col.width, minWidth: col.width, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                  onMouseEnter={() => !col.isDefault && setHoveredCol(col.key)}
-                  onMouseLeave={() => setHoveredCol(null)}
                 >
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{col.label}</span>
-                  {!col.isDefault && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setConfirmDeleteCol(col.key); }}
-                      title="Delete column"
-                      style={{
-                        opacity: hoveredCol === col.key && !isEditMode ? 1 : 0,
-                        transition: 'opacity 0.15s ease',
-                        padding: 2, borderRadius: 4, cursor: 'pointer',
-                        color: 'var(--text-tertiary)', background: 'none', border: 'none', display: 'flex',
-                        flexShrink: 0, marginLeft: 4,
-                        pointerEvents: isEditMode ? 'none' : 'auto',
-                      }}
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
                   {isEditMode && (
                     <div
                       onMouseDown={(e) => handleResizeStart(e, col.key, col.width as string)}
@@ -219,24 +226,6 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 8 }}>
               <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmDeleteTrade(null)}>Cancel</button>
               <button className="btn btn-primary" style={{ flex: 1, background: 'var(--danger)', color: 'white', border: 'none' }} onClick={() => { handleDeleteRow(confirmDeleteTrade); setConfirmDeleteTrade(null); }}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete column confirmation */}
-      {confirmDeleteCol && (
-        <div onClick={() => setConfirmDeleteCol(null)} style={{ position: 'fixed', inset: 0, background: 'var(--surface-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500, animation: 'fadeIn 0.15s ease-out' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 16, boxShadow: 'var(--shadow-xl)', padding: '28px 32px', maxWidth: 380, width: '100%', animation: 'scaleIn 0.2s ease-out', display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Delete column?</h3>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                This will hide <strong>{allColumns.find(c => c.key === confirmDeleteCol)?.label || confirmDeleteCol}</strong> from the table and the New Trade form. Existing data for this field will remain untouched in the database.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button className="btn btn-secondary" onClick={() => setConfirmDeleteCol(null)}>Cancel</button>
-              <button className="btn btn-primary" style={{ background: 'var(--danger)', color: 'white' }} onClick={() => handleConfirmDeleteColumn(confirmDeleteCol)}>Delete</button>
             </div>
           </div>
         </div>

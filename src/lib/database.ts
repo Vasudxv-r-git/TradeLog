@@ -291,6 +291,14 @@ export async function addCustomColumn(uid: string, column: CustomColumn): Promis
   }
 }
 
+export async function updateCustomColumn(uid: string, column: CustomColumn): Promise<void> {
+  const profile = await getUserProfile(uid);
+  const existing = profile?.customColumns || [];
+  await createOrUpdateUserProfile(uid, {
+    customColumns: existing.map((c) => (c.key === column.key ? column : c)),
+  });
+}
+
 export async function removeCustomColumn(uid: string, columnKey: string): Promise<void> {
   const profile = await getUserProfile(uid);
   const existing = profile?.customColumns || [];
