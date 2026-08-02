@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTrades } from '@/hooks/useTrades';
 import { DEFAULT_COLUMNS } from '@/lib/constants';
 import { Trade, CustomColumn, CustomPair, ColumnDef } from '@/types';
 import TradeRow from './TradeRow';
 import EmptyState from '@/components/layout/EmptyState';
-import { Columns3, X } from 'lucide-react';
+import { Columns3, X, Pencil, Check, RotateCcw } from 'lucide-react';
 import AddColumnModal from './AddColumnModal';
 
 interface TradeGridProps {
@@ -27,10 +27,76 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
   const [confirmDeleteTrade, setConfirmDeleteTrade] = useState<string | null>(null);
   const [hoveredCol, setHoveredCol] = useState<string | null>(null);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [colWidths, setColWidths] = useState<Record<string, number>>({});
+  const [resizingCol, setResizingCol] = useState<string | null>(null);
+  
+  const resizeState = useRef({ startX: 0, startWidth: 0, colKey: '' });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('tradeGridColWidths');
+    if (saved) {
+      try { setColWidths(JSON.parse(saved)); } catch (e) { console.error(e); }
+    }
+  }, []);
+
+  const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, colKey: string, currentWidth: string) => {
+    e.preventDefault();
+    setResizingCol(colKey);
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const widthNum = colWidths[colKey] || parseInt(currentWidth.replace('px', '') || '100');
+    resizeState.current = { startX: clientX, startWidth: widthNum, colKey };
+  };
+
+  useEffect(() => {
+    if (!resizingCol) return;
+
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+      const { startX, startWidth, colKey } = resizeState.current;
+      const delta = clientX - startX;
+      let newWidth = startWidth + delta;
+      if (newWidth < 50) newWidth = 50;
+      
+      setColWidths(prev => ({ ...prev, [colKey]: newWidth }));
+    };
+
+    const handleUp = () => {
+      setResizingCol(null);
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleUp);
+    };
+  }, [resizingCol]);
+
+  const toggleEditMode = () => {
+    if (isEditMode) {
+      localStorage.setItem('tradeGridColWidths', JSON.stringify(colWidths));
+    }
+    setIsEditMode(!isEditMode);
+  };
+
+  const handleResetWidths = () => {
+    setColWidths({});
+    localStorage.removeItem('tradeGridColWidths');
+  };
+
   const allColumns: ColumnDef[] = [
     ...DEFAULT_COLUMNS,
     ...customColumns.map((cc) => ({ key: cc.key, label: cc.name, type: cc.type as ColumnDef['type'], width: '140px', options: cc.options })),
-  ].filter((col) => !hiddenColumns.has(col.key));
+  ].filter((col) => !hiddenColumns.has(col.key)).map((col) => ({
+    ...col,
+    width: colWidths[col.key] ? `${colWidths[col.key]}px` : col.width
+  }));
 
   const handleDeleteRow = async (tradeId: string) => {
     setRemovingIds((prev) => new Set(prev).add(tradeId));
@@ -59,7 +125,25 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Trades</h3>
-        <button className="btn btn-secondary btn-sm" onClick={() => setShowAddColumn(true)}><Columns3 size={14} /><span>Add Column</span></button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {isEditMode && (
+            <button className="btn btn-secondary btn-sm" onClick={handleResetWidths}>
+              <RotateCcw size={14} /><span>Reset</span>
+            </button>
+          )}
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ background: isEditMode ? 'var(--primary-color)' : '', color: isEditMode ? '#fff' : '', borderColor: isEditMode ? 'var(--primary-color)' : '' }}
+            onClick={toggleEditMode}
+          >
+            {isEditMode ? <><Check size={14} /><span>Done</span></> : <><Pencil size={14} /><span>Edit</span></>}
+          </button>
+          {!isEditMode && (
+            <button className="btn btn-secondary btn-sm" onClick={() => setShowAddColumn(true)}>
+              <Columns3 size={14} /><span>Add Column</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {trades.length === 0 ? <EmptyState /> : (
@@ -74,21 +158,42 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
                   onMouseEnter={() => !col.isDefault && setHoveredCol(col.key)}
                   onMouseLeave={() => setHoveredCol(null)}
                 >
-                  <span>{col.label}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{col.label}</span>
                   {!col.isDefault && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmDeleteCol(col.key); }}
                       title="Delete column"
                       style={{
-                        opacity: hoveredCol === col.key ? 1 : 0,
+                        opacity: hoveredCol === col.key && !isEditMode ? 1 : 0,
                         transition: 'opacity 0.15s ease',
                         padding: 2, borderRadius: 4, cursor: 'pointer',
                         color: 'var(--text-tertiary)', background: 'none', border: 'none', display: 'flex',
                         flexShrink: 0, marginLeft: 4,
+                        pointerEvents: isEditMode ? 'none' : 'auto',
                       }}
                     >
                       <X size={12} />
                     </button>
+                  )}
+                  {isEditMode && (
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, col.key, col.width as string)}
+                      onTouchStart={(e) => handleResizeStart(e, col.key, col.width as string)}
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 10,
+                        cursor: 'col-resize',
+                        background: resizingCol === col.key ? 'var(--primary-color)' : 'var(--grid-border)',
+                        opacity: resizingCol === col.key ? 1 : 0.3,
+                        zIndex: 100,
+                        transform: 'translateX(5px)',
+                      }}
+                      onMouseEnter={(e) => { if (!resizingCol) e.currentTarget.style.opacity = '0.8'; }}
+                      onMouseLeave={(e) => { if (!resizingCol) e.currentTarget.style.opacity = '0.3'; }}
+                    />
                   )}
                 </div>
               ))}
