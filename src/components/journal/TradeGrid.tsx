@@ -6,22 +6,19 @@ import { DEFAULT_COLUMNS } from '@/lib/constants';
 import { Trade, CustomColumn, CustomPair, ColumnDef } from '@/types';
 import TradeRow from './TradeRow';
 import EmptyState from '@/components/layout/EmptyState';
-import { Columns3, X, Pencil, Check, RotateCcw } from 'lucide-react';
-import AddColumnModal from './AddColumnModal';
+import { X, Pencil, Check, RotateCcw } from 'lucide-react';
 
 interface TradeGridProps {
   customColumns: CustomColumn[];
   customPairs: CustomPair[];
   hiddenColumns: Set<string>;
-  onAddCustomColumn: (column: CustomColumn) => void;
   onAddCustomPair: (pair: CustomPair) => void;
   onDeleteColumn: (columnKey: string) => void;
   onEditTrade: (trade: Trade) => void;
 }
 
-export default function TradeGrid({ customColumns, customPairs, hiddenColumns, onAddCustomColumn, onAddCustomPair, onDeleteColumn, onEditTrade }: TradeGridProps) {
+export default function TradeGrid({ customColumns, customPairs, hiddenColumns, onAddCustomPair, onDeleteColumn, onEditTrade }: TradeGridProps) {
   const { trades, loading, deleteTrade } = useTrades();
-  const [showAddColumn, setShowAddColumn] = useState(false);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [confirmDeleteCol, setConfirmDeleteCol] = useState<string | null>(null);
   const [confirmDeleteTrade, setConfirmDeleteTrade] = useState<string | null>(null);
@@ -138,11 +135,6 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
           >
             {isEditMode ? <><Check size={14} /><span>Done</span></> : <><Pencil size={14} /><span>Edit</span></>}
           </button>
-          {!isEditMode && (
-            <button className="btn btn-secondary btn-sm" onClick={() => setShowAddColumn(true)}>
-              <Columns3 size={14} /><span>Add Column</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -213,8 +205,6 @@ export default function TradeGrid({ customColumns, customPairs, hiddenColumns, o
           </div>
         </div>
       )}
-
-      {showAddColumn && <AddColumnModal onAdd={(column) => { onAddCustomColumn(column); setShowAddColumn(false); }} onClose={() => setShowAddColumn(false)} />}
 
       {/* Delete trade confirmation */}
       {confirmDeleteTrade && (

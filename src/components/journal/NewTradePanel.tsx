@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, GripVertical, Settings2, RotateCcw, Check } from 'lucide-react';
+import { X, GripVertical, Settings2, RotateCcw, Check, Columns3 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -12,6 +12,7 @@ import PairSelect from '@/components/fields/PairSelect';
 import SelectField from '@/components/fields/SelectField';
 import ImageUpload from '@/components/fields/ImageUpload';
 import { WEEKDAYS } from '@/lib/constants';
+import AddColumnModal from '@/components/journal/AddColumnModal';
 
 interface TradePanelProps {
   customColumns: CustomColumn[];
@@ -20,6 +21,7 @@ interface TradePanelProps {
   hiddenPairs: Set<string>;
   onAddPair: (pair: CustomPair) => void;
   onDeletePair: (pairSymbol: string) => void;
+  onAddCustomColumn: (column: CustomColumn) => void;
   onSave: (trade: Partial<Trade>) => void;
   onClose: () => void;
   /** If provided, the panel is in "Edit" mode with pre-filled values */
@@ -39,10 +41,10 @@ const dayOptions = WEEKDAYS.map((d) => ({ label: d, value: d }));
 function SortableItem({ id, isRearranging, children }: { id: string, isRearranging: boolean, children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.8 : 1,
     display: isRearranging ? 'flex' : 'block',
     gap: 16,
     alignItems: 'center',
@@ -50,8 +52,8 @@ function SortableItem({ id, isRearranging, children }: { id: string, isRearrangi
     padding: isRearranging ? '16px' : '0',
     borderRadius: '12px',
     border: isRearranging ? '1px dashed var(--border-default)' : 'none',
-    position: 'relative' as const,
-    zIndex: isDragging ? 1 : 0,
+    position: isDragging ? 'relative' : 'static',
+    zIndex: isDragging ? 999 : 'auto',
     boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.12)' : 'none',
   };
 
@@ -61,17 +63,17 @@ function SortableItem({ id, isRearranging, children }: { id: string, isRearrangi
         <div 
           {...attributes} 
           {...listeners} 
-          style={{ cursor: 'grab', padding: '4px', color: 'var(--text-tertiary)' }}
+          style={{ cursor: 'grab', padding: '4px', color: 'var(--text-tertiary)', flexShrink: 0 }}
         >
           <GripVertical size={20} />
         </div>
       )}
-      <div style={{ flex: 1 }}>{children}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
     </div>
   );
 }
 
-export default function TradePanel({ customColumns, customPairs, hiddenColumns, hiddenPairs, onAddPair, onDeletePair, onSave, onClose, editingTrade }: TradePanelProps) {
+export default function TradePanel({ customColumns, customPairs, hiddenColumns, hiddenPairs, onAddPair, onDeletePair, onAddCustomColumn, onSave, onClose, editingTrade }: TradePanelProps) {
   const isEditing = !!editingTrade;
   const [trade, setTrade] = useState<Partial<Trade>>(
     editingTrade
@@ -82,6 +84,7 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
         }
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showAddColumn, setShowAddColumn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [isRearranging, setIsRearranging] = useState(false);
@@ -377,6 +380,11 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', marginTop: 2 }}>{isEditing ? 'Modify the trade details below' : 'Fill in the details below'}</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            {!isRearranging && (
+              <button onClick={() => setShowAddColumn(true)} title="Add Column" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+                <Columns3 size={18} />
+              </button>
+            )}
             {isRearranging && (
               <button onClick={resetOrder} title="Reset Order" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
                 <RotateCcw size={18} />
@@ -394,15 +402,23 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
         {/* Form Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
           <div style={sectionStyle}>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={activeOrder} strategy={verticalListSortingStrategy}>
-                {activeOrder.map((key) => (
-                  <SortableItem key={key} id={key} isRearranging={isRearranging}>
-                    {sectionContents[key]}
-                  </SortableItem>
-                ))}
-              </SortableContext>
-            </DndContext>
+            {isRearranging ? (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={activeOrder} strategy={verticalListSortingStrategy}>
+                  {activeOrder.map((key) => (
+                    <SortableItem key={key} id={key} isRearranging={isRearranging}>
+                      {sectionContents[key]}
+                    </SortableItem>
+                  ))}
+                </SortableContext>
+              </DndContext>
+            ) : (
+              activeOrder.map((key) => (
+                <div key={key}>
+                  {sectionContents[key]}
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -415,6 +431,14 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
           </div>
         </div>
       </div>
+
+      {showAddColumn && (
+        <AddColumnModal
+          onClose={() => setShowAddColumn(false)}
+          onAdd={(col) => { onAddCustomColumn(col); setShowAddColumn(false); }}
+          existingKeys={new Set(customColumns.map(c => c.key))}
+        />
+      )}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes slideInRight {
           from { transform: translateX(100%); }

@@ -79,7 +79,6 @@ function DashboardContent({
         customColumns={customColumns}
         customPairs={customPairs}
         hiddenColumns={hiddenColumns}
-        onAddCustomColumn={onAddColumn}
         onAddCustomPair={onAddPair}
         onDeleteColumn={onDeleteColumn}
         onEditTrade={(trade) => setEditingTrade(trade)}
@@ -94,6 +93,7 @@ function DashboardContent({
           hiddenPairs={hiddenPairs}
           onAddPair={onAddPair}
           onDeletePair={onDeletePair}
+          onAddCustomColumn={onAddColumn}
           onSave={handleSaveNewTrade}
           onClose={() => setShowNewTrade(false)}
         />
@@ -108,6 +108,7 @@ function DashboardContent({
           hiddenPairs={hiddenPairs}
           onAddPair={onAddPair}
           onDeletePair={onDeletePair}
+          onAddCustomColumn={onAddColumn}
           onSave={handleSaveEditedTrade}
           onClose={() => setEditingTrade(null)}
           editingTrade={editingTrade}
