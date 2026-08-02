@@ -436,7 +436,6 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
         <AddColumnModal
           onClose={() => setShowAddColumn(false)}
           onAdd={(col) => { onAddCustomColumn(col); setShowAddColumn(false); }}
-          existingKeys={new Set(customColumns.map(c => c.key))}
         />
       )}
       <style dangerouslySetInnerHTML={{__html: `
