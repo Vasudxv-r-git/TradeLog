@@ -9,25 +9,7 @@ export const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ] as const;
 
-export interface PairGroup {
-  category: string;
-  pairs: string[];
-}
 
-export const DEFAULT_PAIR_GROUPS: PairGroup[] = [
-  {
-    category: 'Commodities',
-    pairs: ['XAU/USD'],
-  },
-  {
-    category: 'Currencies',
-    pairs: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD'],
-  },
-  {
-    category: 'Futures',
-    pairs: ['US30', 'NAS100'],
-  },
-];
 
 export const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: 'tradeNumber', label: 'No. of Trades', type: 'text', width: '120px', isDefault: true },

@@ -8,7 +8,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { Trade, CustomColumn, CustomPair } from '@/types';
 import { DEFAULT_COLUMNS } from '@/lib/constants';
 import DatePickerPopup from '@/components/fields/DatePickerPopup';
-import PairSelect from '@/components/fields/PairSelect';
 import SelectField from '@/components/fields/SelectField';
 import ImageUpload from '@/components/fields/ImageUpload';
 import { WEEKDAYS } from '@/lib/constants';
@@ -20,9 +19,7 @@ interface TradePanelProps {
   customColumns: CustomColumn[];
   customPairs: CustomPair[];
   hiddenColumns: Set<string>;
-  hiddenPairs: Set<string>;
   onAddPair: (pair: CustomPair) => void;
-  onDeletePair: (pairSymbol: string) => void;
   onAddCustomColumn: (column: CustomColumn) => void;
   onUpdateCustomColumn: (column: CustomColumn) => void;
   onDeleteCustomColumn: (colKey: string) => void;
@@ -79,7 +76,7 @@ function SortableItem({ id, isRearranging, children }: { id: string, isRearrangi
   );
 }
 
-export default function TradePanel({ customColumns, customPairs, hiddenColumns, hiddenPairs, onAddPair, onDeletePair, onAddCustomColumn, onUpdateCustomColumn, onDeleteCustomColumn, sectionOrder, onUpdateSectionOrder, onSave, onClose, editingTrade }: TradePanelProps) {
+export default function TradePanel({ customColumns, customPairs, hiddenColumns, onAddPair, onAddCustomColumn, onUpdateCustomColumn, onDeleteCustomColumn, sectionOrder, onUpdateSectionOrder, onSave, onClose, editingTrade }: TradePanelProps) {
   const isEditing = !!editingTrade;
   const [trade, setTrade] = useState<Partial<Trade>>(
     editingTrade
@@ -267,7 +264,13 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
       <div>
         <label style={labelStyle}>Pair</label>
         <div style={{ ...inputStyle, padding: '6px 6px' }}>
-          <PairSelect value={trade.pair || ''} customPairs={customPairs} hiddenPairs={hiddenPairs} onChange={(pair) => handleUpdate({ pair })} onAddPair={onAddPair} onDeletePair={onDeletePair} />
+          <EditableSelectField
+            value={trade.pair || ''}
+            options={customPairs.map(p => p.symbol)}
+            onChange={(pair) => handleUpdate({ pair })}
+            onAddOption={(newOption) => onAddPair({ symbol: newOption, category: 'Custom' })}
+            placeholder="Select or Add Pair"
+          />
         </div>
       </div>
     ) : null,
@@ -357,12 +360,14 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
                   placeholder="0"
                 />
               ) : col.type === 'dropdown' ? (
-                <EditableSelectField
-                  value={valueStr}
-                  options={col.options || []}
-                  onChange={(newVal) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: newVal } })}
-                  onAddOption={(newOption) => onUpdateCustomColumn({ ...col, options: [...(col.options || []), newOption] })}
-                />
+                <div style={{ ...inputStyle, padding: '6px 6px' }}>
+                  <EditableSelectField
+                    value={valueStr}
+                    options={col.options || []}
+                    onChange={(newVal) => handleUpdate({ customFields: { ...trade.customFields, [col.key]: newVal } })}
+                    onAddOption={(newOption) => onUpdateCustomColumn({ ...col, options: [...(col.options || []), newOption] })}
+                  />
+                </div>
               ) : (
                 <input
                   style={inputStyle}

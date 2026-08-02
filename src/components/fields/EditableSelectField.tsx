@@ -66,9 +66,10 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
         }}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
-          padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border-default)',
-          fontSize: '0.875rem', cursor: 'pointer', borderRadius: 8, color: value ? 'var(--text-primary)' : 'var(--text-tertiary)',
-          minHeight: 38
+          padding: '4px 8px', background: 'transparent', border: 'none',
+          fontSize: '0.8125rem', cursor: 'pointer', borderRadius: 4, transition: 'background 0.15s ease',
+          color: value ? 'var(--text-primary)' : 'var(--text-tertiary)',
+          fontWeight: value ? 500 : 400
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

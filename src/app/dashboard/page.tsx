@@ -20,12 +20,10 @@ function DashboardContent({
   customColumns,
   customPairs,
   hiddenColumns,
-  hiddenPairs,
   onAddColumn,
   onUpdateColumn,
   onAddPair,
   onDeleteColumn,
-  onDeletePair,
   sectionOrder,
   onUpdateSectionOrder,
 }: {
@@ -34,12 +32,10 @@ function DashboardContent({
   customColumns: CustomColumn[];
   customPairs: CustomPair[];
   hiddenColumns: Set<string>;
-  hiddenPairs: Set<string>;
   onAddColumn: (col: CustomColumn) => void;
   onUpdateColumn: (col: CustomColumn) => void;
   onAddPair: (pair: CustomPair) => void;
   onDeleteColumn: (colKey: string) => void;
-  onDeletePair: (pairSymbol: string) => void;
   sectionOrder: string[];
   onUpdateSectionOrder: (order: string[]) => void;
 }) {
@@ -94,11 +90,9 @@ function DashboardContent({
           customColumns={customColumns}
           customPairs={customPairs}
           hiddenColumns={hiddenColumns}
-          hiddenPairs={hiddenPairs}
           sectionOrder={sectionOrder}
           onUpdateSectionOrder={onUpdateSectionOrder}
           onAddPair={onAddPair}
-          onDeletePair={onDeletePair}
           onAddCustomColumn={onAddColumn}
           onUpdateCustomColumn={onUpdateColumn}
           onDeleteCustomColumn={onDeleteColumn}
@@ -113,11 +107,9 @@ function DashboardContent({
           customColumns={customColumns}
           customPairs={customPairs}
           hiddenColumns={hiddenColumns}
-          hiddenPairs={hiddenPairs}
           sectionOrder={sectionOrder}
           onUpdateSectionOrder={onUpdateSectionOrder}
           onAddPair={onAddPair}
-          onDeletePair={onDeletePair}
           onAddCustomColumn={onAddColumn}
           onUpdateCustomColumn={onUpdateColumn}
           onDeleteCustomColumn={onDeleteColumn}
@@ -136,7 +128,6 @@ export default function DashboardPage() {
   const [customColumns, setCustomColumns] = useState<CustomColumn[]>([]);
   const [customPairs, setCustomPairs] = useState<CustomPair[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
-  const [hiddenPairs, setHiddenPairs] = useState<Set<string>>(new Set());
   
   const DEFAULT_SECTION_ORDER = ['date', 'pair', 'directionOutcome', 'financials', 'entryModel', 'images', 'remarks', 'customColumns'];
   const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
@@ -152,10 +143,6 @@ export default function DashboardPage() {
     const savedCols = localStorage.getItem('tradelog_hidden_columns');
     if (savedCols) {
       try { setHiddenColumns(new Set(JSON.parse(savedCols))); } catch {}
-    }
-    const savedPairs = localStorage.getItem('tradelog_hidden_pairs');
-    if (savedPairs) {
-      try { setHiddenPairs(new Set(JSON.parse(savedPairs))); } catch {}
     }
     
     const savedOrder = localStorage.getItem('tradelog_section_order') || localStorage.getItem('newTradePanelSectionOrder');
@@ -203,12 +190,6 @@ export default function DashboardPage() {
       if (!user) return;
       await addCustomPair(user.id, pair);
       setCustomPairs((prev) => [...prev, pair]);
-      setHiddenPairs((prev) => {
-        const next = new Set(prev);
-        next.delete(pair.symbol);
-        localStorage.setItem('tradelog_hidden_pairs', JSON.stringify([...next]));
-        return next;
-      });
     },
     [user]
   );
@@ -228,23 +209,6 @@ export default function DashboardPage() {
       });
     },
     [user, customColumns]
-  );
-
-  const handleDeletePair = useCallback(
-    async (pairSymbol: string) => {
-      const isCustom = customPairs.some((p) => p.symbol === pairSymbol);
-      if (isCustom && user) {
-        await removeCustomPair(user.id, pairSymbol);
-        setCustomPairs((prev) => prev.filter((p) => p.symbol !== pairSymbol));
-      }
-      setHiddenPairs((prev) => {
-        const next = new Set(prev);
-        next.add(pairSymbol);
-        localStorage.setItem('tradelog_hidden_pairs', JSON.stringify([...next]));
-        return next;
-      });
-    },
-    [user, customPairs]
   );
 
   return (
@@ -269,12 +233,10 @@ export default function DashboardPage() {
           customColumns={customColumns}
           customPairs={customPairs}
           hiddenColumns={hiddenColumns}
-          hiddenPairs={hiddenPairs}
           onAddColumn={handleAddColumn}
           onUpdateColumn={handleUpdateColumn}
           onAddPair={handleAddPair}
           onDeleteColumn={handleDeleteColumn}
-          onDeletePair={handleDeletePair}
           sectionOrder={sectionOrder}
           onUpdateSectionOrder={handleUpdateSectionOrder}
         />

@@ -108,6 +108,9 @@ export default function TradeGrid({ customColumns, hiddenColumns, sectionOrder, 
 
   const allColumns: ColumnDef[] = baseColumns
     .sort((a, b) => {
+      if (a.key === 'tradeNumber') return -1;
+      if (b.key === 'tradeNumber') return 1;
+
       const indexA = orderedColKeys.indexOf(a.key);
       const indexB = orderedColKeys.indexOf(b.key);
       
