@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { CustomColumn } from '@/types';
 
+import ConfirmModal from '@/components/ui/ConfirmModal';
+
 interface DeleteColumnModalProps {
   customColumns: CustomColumn[];
   onClose: () => void;
@@ -10,10 +12,18 @@ interface DeleteColumnModalProps {
 
 export default function DeleteColumnModal({ customColumns, onClose, onDelete }: DeleteColumnModalProps) {
   const [selectedColKey, setSelectedColKey] = useState<string>('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleDelete = () => {
+  const handleDeleteClick = () => {
+    if (selectedColKey) {
+      setShowConfirm(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
     if (selectedColKey) {
       onDelete(selectedColKey);
+      setShowConfirm(false);
     }
   };
 
@@ -63,7 +73,7 @@ export default function DeleteColumnModal({ customColumns, onClose, onDelete }: 
           </button>
           <button
             className="btn btn-primary"
-            onClick={handleDelete}
+            onClick={handleDeleteClick}
             disabled={!selectedColKey}
             style={{ background: selectedColKey ? 'var(--danger)' : 'var(--border-default)', color: 'white', border: 'none', opacity: selectedColKey ? 1 : 0.5, cursor: selectedColKey ? 'pointer' : 'not-allowed' }}
           >
@@ -71,6 +81,14 @@ export default function DeleteColumnModal({ customColumns, onClose, onDelete }: 
           </button>
         </div>
       </div>
+
+      {showConfirm && (
+        <ConfirmModal
+          title="Delete Column?"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
     </div>
   );
 }

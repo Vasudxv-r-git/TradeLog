@@ -411,25 +411,25 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
           <div style={{ display: 'flex', gap: 8 }}>
             {!isRearranging && (
               <>
-                <button onClick={() => setShowAddColumn(true)} title="Add Column" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+                <button onClick={() => setShowAddColumn(true)} data-tooltip="Add Column" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
                   <Columns3 size={18} />
                 </button>
                 {customColumns.length > 0 && (
-                  <button onClick={() => setShowDeleteColumn(true)} title="Delete Column" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--danger-text)', display: 'flex', padding: 8 }}>
+                  <button onClick={() => setShowDeleteColumn(true)} data-tooltip="Delete Column" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--danger-text)', display: 'flex', padding: 8 }}>
                     <X size={18} />
                   </button>
                 )}
               </>
             )}
             {isRearranging && (
-              <button onClick={resetOrder} title="Reset Order" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+              <button onClick={resetOrder} data-tooltip="Reset Order" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
                 <RotateCcw size={18} />
               </button>
             )}
-            <button onClick={toggleRearrange} title={isRearranging ? "Save Order" : "Rearrange Sections"} style={{ background: isRearranging ? 'var(--primary-color)' : 'var(--bg-tertiary)', border: '1px solid', borderColor: isRearranging ? 'var(--primary-color)' : 'var(--border-default)', borderRadius: 8, cursor: 'pointer', color: isRearranging ? '#fff' : 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+            <button onClick={toggleRearrange} data-tooltip={isRearranging ? "Save Order" : "Rearrange Sections"} style={{ background: isRearranging ? 'var(--primary-color)' : 'var(--bg-tertiary)', border: '1px solid', borderColor: isRearranging ? 'var(--primary-color)' : 'var(--border-default)', borderRadius: 8, cursor: 'pointer', color: isRearranging ? '#fff' : 'var(--text-secondary)', display: 'flex', padding: 8 }}>
               {isRearranging ? <Check size={18} /> : <Settings2 size={18} />}
             </button>
-            <button onClick={onClose} title="Close" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
+            <button onClick={onClose} data-tooltip="Close" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-default)', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 8 }}>
               <X size={18} />
             </button>
           </div>

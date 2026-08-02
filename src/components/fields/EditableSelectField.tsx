@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Check, X } from 'lucide-react';
 
+import ConfirmModal from '@/components/ui/ConfirmModal';
+
 interface EditableSelectFieldProps {
   value: string;
   options: string[];
@@ -16,6 +18,7 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
   const [open, setOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newOption, setNewOption] = useState('');
+  const [optionToDelete, setOptionToDelete] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -105,7 +108,7 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
               {onDeleteOption && (
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); onDeleteOption(opt); }}
+                  onClick={(e) => { e.stopPropagation(); setOptionToDelete(opt); }}
                   style={{
                     position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -172,6 +175,17 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
             )}
           </div>
         </div>
+      )}
+
+      {optionToDelete && (
+        <ConfirmModal
+          title={`Delete ${optionToDelete}?`}
+          onConfirm={() => {
+            if (onDeleteOption) onDeleteOption(optionToDelete);
+            setOptionToDelete(null);
+          }}
+          onCancel={() => setOptionToDelete(null)}
+        />
       )}
     </div>
   );

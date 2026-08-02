@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Settings2, Filter, EyeOff, LayoutGrid } from 'lucide-react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useTrades } from '@/hooks/useTrades';
 import { DEFAULT_COLUMNS } from '@/lib/constants';
 import { Trade, CustomColumn, CustomPair, ColumnDef } from '@/types';
@@ -218,20 +220,11 @@ export default function TradeGrid({ customColumns, hiddenColumns, sectionOrder, 
 
       {/* Delete trade confirmation */}
       {confirmDeleteTrade && (
-        <div onClick={() => setConfirmDeleteTrade(null)} style={{ position: 'fixed', inset: 0, background: 'var(--surface-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500, animation: 'fadeIn 0.15s ease-out' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 16, boxShadow: 'var(--shadow-xl)', padding: '24px', maxWidth: 320, width: '100%', animation: 'scaleIn 0.2s ease-out', display: 'flex', flexDirection: 'column', gap: 16, textAlign: 'center' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>Delete Trade?</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                This action cannot be undone.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 8 }}>
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmDeleteTrade(null)}>Cancel</button>
-              <button className="btn btn-primary" style={{ flex: 1, background: 'var(--danger)', color: 'white', border: 'none' }} onClick={() => { handleDeleteRow(confirmDeleteTrade); setConfirmDeleteTrade(null); }}>Delete</button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title="Delete Trade?"
+          onConfirm={() => { handleDeleteRow(confirmDeleteTrade); setConfirmDeleteTrade(null); }}
+          onCancel={() => setConfirmDeleteTrade(null)}
+        />
       )}
     </div>
   );
