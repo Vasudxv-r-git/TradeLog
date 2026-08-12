@@ -26,7 +26,7 @@ interface TradePanelProps {
   onDeleteCustomColumn: (colKey: string) => void;
   sectionOrder: string[];
   onUpdateSectionOrder: (order: string[]) => void;
-  onSave: (trade: Partial<Trade>) => void;
+  onSave: (trade: Partial<Trade>) => void | Promise<void>;
   onClose: () => void;
   /** If provided, the panel is in "Edit" mode with pre-filled values */
   editingTrade?: Trade;
@@ -92,6 +92,7 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
   const [showDeleteColumn, setShowDeleteColumn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [panelMounted, setPanelMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isRearranging, setIsRearranging] = useState(false);
   const DEFAULT_SECTION_ORDER = [
@@ -226,7 +227,7 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
     }
   };
 
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
     if (!isEditing) {
       const hasValue = (
         (trade.date || '').trim() !== '' ||
@@ -248,7 +249,12 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
       }
     }
     setError(null);
-    onSave(trade);
+    setIsSubmitting(true);
+    try {
+      await onSave(trade);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isVisible = (key: string) => !hiddenColumns.has(key);
@@ -458,8 +464,8 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
                 </SortableContext>
               </DndContext>
             ) : (
-              activeOrder.map((key, i) => (
-                <div key={key} style={{ opacity: 0, animation: `staggerFadeIn 300ms var(--ease-out) ${i * 50}ms forwards` }}>
+              activeOrder.map((key) => (
+                <div key={key}>
                   {sectionContents[key]}
                 </div>
               ))
@@ -471,8 +477,10 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
         <div style={{ padding: '20px 32px', borderTop: '1px solid var(--border-default)', display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--surface-elevated)' }}>
           {error && <div style={{ color: 'var(--danger-text)', fontSize: '0.8125rem', textAlign: 'center' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 12 }}>
-            <button className="btn btn-secondary" style={{ flex: 1, padding: '12px 16px' }} onClick={onClose}>Cancel</button>
-            <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px' }} onClick={handleSaveClick}>{isEditing ? 'Save Changes' : 'Save Trade'}</button>
+            <button className="btn btn-secondary" style={{ flex: 1, padding: '12px 16px' }} onClick={onClose} disabled={isSubmitting}>Cancel</button>
+            <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px' }} onClick={handleSaveClick} disabled={isSubmitting}>
+              {isEditing ? (isSubmitting ? 'Saving...' : 'Save Changes') : (isSubmitting ? 'Saving...' : 'Save Trade')}
+            </button>
           </div>
         </div>
       </div>
