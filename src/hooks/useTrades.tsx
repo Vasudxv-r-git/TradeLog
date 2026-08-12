@@ -60,6 +60,7 @@ export function TradesProvider({ children, year, month }: TradesProviderProps) {
   }, [user, year, month]);
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     loadTrades();
   }, [loadTrades]);
 
@@ -68,7 +69,8 @@ export function TradesProvider({ children, year, month }: TradesProviderProps) {
     const empty = createEmptyTrade();
     const id = await addTradeToDb(user.id, year, month, empty);
     if (id) {
-      await loadTrades(); // Refresh the list
+      await /* eslint-disable-next-line react-hooks/set-state-in-effect */
+    loadTrades(); // Refresh the list
     }
     return id;
   }, [user, year, month, loadTrades]);

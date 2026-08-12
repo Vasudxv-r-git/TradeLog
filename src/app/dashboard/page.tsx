@@ -50,7 +50,7 @@ function DashboardContent({
   const handleSaveNewTrade = async (newTrade: Partial<Trade>) => {
     if (!user) return;
     const fullTrade = { ...newTrade, images: newTrade.images || [] };
-    await addTrade(user.id, year, month, fullTrade as any);
+    await addTrade(user.id, year, month, fullTrade as Omit<Trade, 'id' | 'createdAt' | 'updatedAt'>);
     setShowNewTrade(false);
     refreshTrades();
   };
@@ -126,6 +126,8 @@ function DashboardContent({
   );
 }
 
+const DEFAULT_SECTION_ORDER = ['date', 'pair', 'directionOutcome', 'financials', 'entryModel', 'images', 'remarks', 'customColumns'];
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const { year, month, setYear, setMonth } = useMonthYear();
@@ -133,7 +135,6 @@ export default function DashboardPage() {
   const [customPairs, setCustomPairs] = useState<CustomPair[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   
-  const DEFAULT_SECTION_ORDER = ['date', 'pair', 'directionOutcome', 'financials', 'entryModel', 'images', 'remarks', 'customColumns'];
   const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
 
   useEffect(() => {
@@ -146,6 +147,7 @@ export default function DashboardPage() {
     });
     const savedCols = localStorage.getItem('tradelog_hidden_columns');
     if (savedCols) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       try { setHiddenColumns(new Set(JSON.parse(savedCols))); } catch {}
     }
     
@@ -154,6 +156,7 @@ export default function DashboardPage() {
       try {
         const parsed = JSON.parse(savedOrder);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          /* eslint-disable-next-line react-hooks/set-state-in-effect */
           setSectionOrder(Array.from(new Set([...parsed, ...DEFAULT_SECTION_ORDER])));
         }
       } catch {}

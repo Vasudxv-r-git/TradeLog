@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Trash2, Pencil } from 'lucide-react';
-import { Trade, ColumnDef, CustomPair } from '@/types';
+import { Trade, ColumnDef } from '@/types';
 
 interface TradeRowProps {
   trade: Trade;
@@ -11,18 +11,15 @@ interface TradeRowProps {
   onEdit: () => void;
   onDelete: () => void;
   removing: boolean;
+  isEditMode: boolean;
 }
 
-export default function TradeRow({ trade, index, columns, onEdit, onDelete, removing }: TradeRowProps) {
+export default function TradeRow({ trade, index, columns, onEdit, onDelete, removing, isEditMode }: TradeRowProps) {
   const [hovered, setHovered] = useState(false);
 
   const cellStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', borderRight: '1px solid var(--grid-border)', minHeight: 44,
-    padding: '4px 10px', fontSize: '0.8125rem', color: 'var(--text-primary)',
+    padding: '4px 10px', fontSize: '0.8125rem', color: 'var(--text-primary)', borderBottom: '1px solid var(--grid-border)', borderRight: '1px solid var(--grid-border)'
   };
-
-  // Cap stagger at 10 rows to avoid long waits on large datasets
-  const staggerDelay = Math.min(index, 10) * 30;
 
   const renderCellValue = (col: ColumnDef) => {
     switch (col.key) {
@@ -69,7 +66,6 @@ export default function TradeRow({ trade, index, columns, onEdit, onDelete, remo
           ? <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', display: 'block' }} title={trade.remarks}>{trade.remarks}</span>
           : <span style={{ color: 'var(--text-tertiary)' }}>—</span>;
       default: {
-        // Custom fields
         const val = trade.customFields?.[col.key];
         return val || <span style={{ color: 'var(--text-tertiary)' }}>—</span>;
       }
@@ -77,39 +73,38 @@ export default function TradeRow({ trade, index, columns, onEdit, onDelete, remo
   };
 
   return (
-    <div
+    <tr
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        display: 'flex', alignItems: 'stretch', borderBottom: '1px solid var(--grid-border)',
         transition: 'background-color 150ms ease, opacity 200ms var(--ease-out), transform 200ms var(--ease-out)',
         opacity: removing ? 0 : undefined,
         transform: removing ? 'translateX(-20px)' : 'none',
-        animation: `rowInsert 250ms var(--ease-out) ${staggerDelay}ms both`,
         background: hovered ? 'var(--grid-row-hover)' : (index % 2 === 1 ? 'var(--grid-row-alt)' : 'transparent'),
       }}
     >
-      {/* Row number */}
-      <div style={{ width: 40, minWidth: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-tertiary)', borderRight: '1px solid var(--grid-border)' }}>
+      <td style={{ ...cellStyle, width: 40, textAlign: 'center', fontWeight: 500, color: 'var(--text-tertiary)' }}>
         {index + 1}
-      </div>
+      </td>
 
-      {/* Data cells (read-only) */}
       {columns.map((col) => (
-        <div key={col.key} style={{ ...cellStyle, width: col.width, minWidth: col.width }}>
+        <td key={col.key} style={{ ...cellStyle, width: col.width, minWidth: col.width }}>
           {renderCellValue(col)}
-        </div>
+        </td>
       ))}
 
-      {/* Actions */}
-      <div style={{ width: 70, minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, position: 'sticky', right: 0, background: hovered ? 'var(--grid-row-hover)' : (index % 2 === 1 ? 'var(--grid-row-alt)' : 'var(--surface-card)'), borderLeft: '1px solid var(--grid-border)', zIndex: 1 }}>
-          <button onClick={onEdit} title="Edit trade" style={{ opacity: hovered ? 1 : 0, color: 'var(--accent-text)', padding: 4, borderRadius: 4, cursor: 'pointer', background: 'none', border: 'none', transition: 'opacity 150ms ease, transform 160ms var(--ease-out)', display: 'flex' }}>
-            <Pencil size={14} />
-          </button>
-          <button onClick={onDelete} title="Delete trade" style={{ opacity: hovered ? 1 : 0, color: 'var(--text-tertiary)', padding: 4, borderRadius: 4, cursor: 'pointer', background: 'none', border: 'none', transition: 'opacity 150ms ease, transform 160ms var(--ease-out)', display: 'flex' }}>
-            <Trash2 size={14} />
-          </button>
-      </div>
-    </div>
+      {isEditMode && (
+        <td style={{ ...cellStyle, width: 70, textAlign: 'center', position: 'sticky', right: 0, background: hovered ? 'var(--grid-row-hover)' : (index % 2 === 1 ? 'var(--grid-row-alt)' : 'var(--surface-card)'), borderLeft: '1px solid var(--grid-border)', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <button onClick={onEdit} title="Edit trade" style={{ opacity: hovered ? 1 : 0, color: 'var(--accent-text)', padding: 4, borderRadius: 4, cursor: 'pointer', background: 'none', border: 'none', transition: 'opacity 150ms ease', display: 'flex' }}>
+              <Pencil size={14} />
+            </button>
+            <button onClick={onDelete} title="Delete trade" style={{ opacity: hovered ? 1 : 0, color: 'var(--text-tertiary)', padding: 4, borderRadius: 4, cursor: 'pointer', background: 'none', border: 'none', transition: 'opacity 150ms ease', display: 'flex' }}>
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </td>
+      )}
+    </tr>
   );
 }

@@ -13,14 +13,19 @@ export default function PnLChart({ trades }: PnLChartProps) {
   const { theme } = useTheme();
 
   const chartData = useMemo(() => {
-    let cumulative = 0;
     return trades
       .filter((t) => t.reward !== null && t.reward !== undefined)
-      .map((t, i) => {
+      .reduce((acc, t, i) => {
         const reward = t.reward || 0;
-        cumulative += reward;
-        return { name: t.date || `Trade ${i + 1}`, reward, cumulative, pair: t.pair };
-      });
+        const prevCumulative = acc.length > 0 ? acc[acc.length - 1].cumulative : 0;
+        acc.push({
+          name: t.date || `Trade ${i + 1}`,
+          reward,
+          cumulative: prevCumulative + reward,
+          pair: t.pair
+        });
+        return acc;
+      }, [] as { name: string; reward: number; cumulative: number; pair: string }[]);
   }, [trades]);
 
   if (chartData.length === 0) return null;
@@ -71,9 +76,10 @@ export default function PnLChart({ trades }: PnLChartProps) {
               padding: '10px 14px',
             }}
             labelStyle={{ fontWeight: 600, marginBottom: 4, color: theme === 'dark' ? '#fafafa' : '#0f1729' }}
-            formatter={(value: any, name: any) => {
-              const label = name === 'cumulative' ? 'Cumulative P&L' : name;
-              return [`$${Number(value).toFixed(2)}`, label];
+            formatter={(value: unknown, name: unknown) => {
+              const label = String(name) === 'cumulative' ? 'Cumulative P&L' : String(name);
+              const numValue = typeof value === 'number' ? value : Number(value);
+              return [`$${(numValue || 0).toFixed(2)}`, label];
             }}
             cursor={{ stroke: lineColor, strokeWidth: 1, strokeDasharray: '4 4' }}
           />

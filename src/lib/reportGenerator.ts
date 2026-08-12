@@ -1,7 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Trade } from '@/types';
-import { MONTHS } from './constants';
 
 interface GenerateReportOptions {
   title: string;
@@ -166,7 +165,7 @@ export function generateReportPDF(options: GenerateReportOptions): void {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(255, 255, 255);
-  const mainTitle = 'TradeLog Report';
+  const mainTitle = title;
   doc.text(mainTitle, 14, 13);
 
   if (options.userName) {

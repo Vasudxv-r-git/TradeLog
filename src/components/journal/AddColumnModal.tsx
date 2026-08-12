@@ -36,7 +36,7 @@ export default function AddColumnModal({ onAdd, onClose }: AddColumnModalProps) 
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Type</label>
-            <select style={inputStyle} value={type} onChange={(e) => setType(e.target.value as any)}>
+            <select style={inputStyle} value={type} onChange={(e) => setType(e.target.value as 'text' | 'number' | 'dropdown')}>
               <option value="text">Text</option>
               <option value="number">Number</option>
               <option value="dropdown">Dropdown</option>

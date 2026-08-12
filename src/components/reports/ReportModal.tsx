@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Download, Calendar, FileText, Loader2 } from 'lucide-react';
+import { X, Download, FileText, Loader2 } from 'lucide-react';
 import { MONTHS } from '@/lib/constants';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchTrades, fetchTradesForDateRange, fetchAvailableYears, getUserProfile } from '@/lib/database';
@@ -21,6 +21,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
   const [activeTab, setActiveTab] = useState<'monthly' | 'custom'>('monthly');
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     setMounted(true);
   }, []);
 
@@ -52,6 +53,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
         }
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleDownloadMonthly = async () => {
@@ -73,7 +75,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
       });
 
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error generating monthly report:', err);
       setErrorMsg('Failed to generate report. Please try again.');
     } finally {
@@ -108,7 +110,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
       });
 
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error generating custom report:', err);
       setErrorMsg('Failed to generate report. Please try again.');
     } finally {
@@ -129,22 +131,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
     cursor: 'pointer',
   };
 
-  const inputButtonStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: 8,
-    border: '1px solid var(--border-default)',
-    background: 'var(--bg-tertiary)',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: 'var(--text-primary)',
-    textAlign: 'left',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  };
-
+  
   const labelStyle: React.CSSProperties = {
     fontSize: '0.75rem',
     fontWeight: 600,

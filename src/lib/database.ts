@@ -126,7 +126,7 @@ export async function updateTrade(
   const supabase = getSupabase();
 
   // Map Trade field names to DB column names
-  const dbUpdates: Record<string, any> = {};
+  const dbUpdates: Record<string, unknown> = {};
   if (updates.date !== undefined) dbUpdates.date = updates.date;
   if (updates.day !== undefined) dbUpdates.day = updates.day;
   if (updates.pair !== undefined) dbUpdates.pair = updates.pair;
@@ -223,7 +223,7 @@ export async function createOrUpdateUserProfile(
 ): Promise<void> {
   const supabase = getSupabase();
 
-  const dbData: Record<string, any> = { uid };
+  const dbData: Record<string, unknown> = { uid };
   if (profile.displayName !== undefined) dbData.display_name = profile.displayName;
   if (profile.email !== undefined) dbData.email = profile.email;
   if (profile.photoURL !== undefined) dbData.photo_url = profile.photoURL;
@@ -339,22 +339,22 @@ export async function uploadImage(
 // HELPERS
 // ============================================
 
-function mapDbToTrade(row: any): Trade {
+function mapDbToTrade(row: Record<string, unknown>): Trade {
   return {
-    id: row.id,
-    date: row.date || '',
-    day: row.day || '',
-    pair: row.pair || '',
-    direction: row.direction || '',
-    outcome: row.outcome || '',
+    id: row.id as string,
+    date: (row.date as string) || '',
+    day: (row.day as string) || '',
+    pair: (row.pair as string) || '',
+    direction: (row.direction as 'Long' | 'Short' | '') || '',
+    outcome: (row.outcome as 'Profit' | 'Loss' | '') || '',
 
-    reward: row.reward,
-    commission: row.commission,
-    entryModel: row.entry_model || '',
-    images: row.images || [],
-    remarks: row.remarks || '',
-    customFields: row.custom_fields || {},
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    reward: (row.reward as number) ?? null,
+    commission: (row.commission as number) ?? null,
+    entryModel: (row.entry_model as string) || '',
+    images: (row.images as Trade['images']) || [],
+    remarks: (row.remarks as string) || '',
+    customFields: (row.custom_fields as Record<string, string | number>) || {},
+    createdAt: (row.created_at as string) ?? null,
+    updatedAt: (row.updated_at as string) ?? null,
   };
 }
