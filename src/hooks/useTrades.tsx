@@ -77,9 +77,15 @@ export function TradesProvider({ children, year, month }: TradesProviderProps) {
     async (tradeId: string, updates: Partial<Trade>) => {
       if (!user) return;
       // Optimistic update
-      setTrades((prev) =>
-        prev.map((t) => (t.id === tradeId ? { ...t, ...updates } : t))
-      );
+      setTrades((prev) => {
+        const next = prev.map((t) => (t.id === tradeId ? { ...t, ...updates } : t));
+        return next.sort((a, b) => {
+          if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return aTime - bTime;
+        });
+      });
       await updateTradeInDb(user.id, year, month, tradeId, updates);
     },
     [user, year, month]

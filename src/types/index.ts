@@ -6,7 +6,6 @@ export interface ImageEntry {
 
 export interface Trade {
   id: string;
-  tradeNumber: string;
   date: string;               // ISO date string (YYYY-MM-DD)
   day: string;                // Weekday name
   pair: string;

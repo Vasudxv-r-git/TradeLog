@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Plus, Check, X } from 'lucide-react';
 
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -16,15 +17,20 @@ interface EditableSelectFieldProps {
 
 export default function EditableSelectField({ value, options, placeholder = 'Select', onChange, onAddOption, onDeleteOption }: EditableSelectFieldProps) {
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const [isAdding, setIsAdding] = useState(false);
   const [newOption, setNewOption] = useState('');
   const [optionToDelete, setOptionToDelete] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        ref.current && !ref.current.contains(e.target as Node) &&
+        (!menuRef.current || !menuRef.current.contains(e.target as Node))
+      ) {
         setOpen(false);
         setIsAdding(false);
         setNewOption('');
@@ -39,6 +45,20 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
       inputRef.current.focus();
     }
   }, [isAdding]);
+
+  const handleToggle = () => {
+    if (!isAdding) {
+      if (!open && ref.current) {
+        const rect = ref.current.getBoundingClientRect();
+        setCoords({
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.left + window.scrollX,
+          width: rect.width
+        });
+      }
+      setOpen(!open);
+    }
+  };
 
   const handleAdd = () => {
     const trimmed = newOption.trim();
@@ -65,9 +85,7 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
     <div style={{ position: 'relative', width: '100%' }} ref={ref}>
       <button
         type="button"
-        onClick={() => {
-          if (!isAdding) setOpen(!open);
-        }}
+        onClick={handleToggle}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
           padding: '4px 8px', background: 'transparent', border: 'none',
@@ -82,8 +100,8 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
         <ChevronDown size={14} style={{ color: 'var(--text-tertiary)', transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0)', flexShrink: 0 }} />
       </button>
 
-      {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, width: '100%', background: 'var(--surface-elevated)', border: '1px solid var(--border-default)', borderRadius: 8, boxShadow: 'var(--shadow-md)', padding: 4, zIndex: 300, animation: 'slideDown 0.15s ease-out', maxHeight: 250, overflowY: 'auto' }}>
+      {open && typeof document !== 'undefined' && createPortal(
+        <div ref={menuRef} style={{ position: 'absolute', top: coords.top, left: coords.left, width: coords.width, background: 'var(--surface-elevated)', border: '1px solid var(--border-default)', borderRadius: 8, boxShadow: 'var(--shadow-md)', padding: 4, zIndex: 9999, animation: 'scaleIn 0.15s ease-out', transformOrigin: 'top center', maxHeight: 250, overflowY: 'auto' }}>
           {options.length === 0 && !isAdding && (
             <div style={{ padding: '8px 10px', fontSize: '0.8125rem', color: 'var(--text-tertiary)', fontStyle: 'italic', textAlign: 'center' }}>
               No options available
@@ -174,7 +192,8 @@ export default function EditableSelectField({ value, options, placeholder = 'Sel
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {optionToDelete && (

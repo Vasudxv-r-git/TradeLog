@@ -268,7 +268,7 @@ export function generateReportPDF(options: GenerateReportOptions): void {
   startY += 4;
 
   const tableBody = trades.map((t, idx) => [
-    t.tradeNumber || String(idx + 1),
+    String(idx + 1),
     t.date || '—',
     t.day || '—',
     t.pair || '—',

@@ -7,7 +7,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { CSS } from '@dnd-kit/utilities';
 import { Trade, CustomColumn, CustomPair } from '@/types';
 import { DEFAULT_COLUMNS } from '@/lib/constants';
-import DatePickerPopup from '@/components/fields/DatePickerPopup';
+import DatePickerField from '@/components/fields/DatePickerField';
 import SelectField from '@/components/fields/SelectField';
 import ImageUpload from '@/components/fields/ImageUpload';
 import { WEEKDAYS } from '@/lib/constants';
@@ -83,11 +83,11 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
     editingTrade
       ? { ...editingTrade }
       : {
-          tradeNumber: '', date: '', day: '', pair: '', direction: '', outcome: '',
+          date: '', day: '', pair: '', direction: '', outcome: '',
           reward: null, commission: null, entryModel: '', images: [], remarks: '', customFields: {}
         }
   );
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  // showDatePicker removed
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [showDeleteColumn, setShowDeleteColumn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -265,8 +265,11 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div style={{ position: 'relative' }}>
           <label style={labelStyle}>Date</label>
-          <button onClick={() => setShowDatePicker(!showDatePicker)} style={{ ...inputStyle, textAlign: 'left', cursor: 'pointer', color: trade.date ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>{trade.date || 'Pick date'}</button>
-          {showDatePicker && <DatePickerPopup value={trade.date || ''} onChange={(date, day) => { handleUpdate({ date, day }); setShowDatePicker(false); }} onClose={() => setShowDatePicker(false)} />}
+          <DatePickerField 
+            value={trade.date || ''} 
+            onChange={(date, day) => handleUpdate({ date, day })} 
+            placeholder="Pick date" 
+          />
         </div>
         {isVisible('day') && (
           <div>

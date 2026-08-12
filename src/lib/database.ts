@@ -17,6 +17,7 @@ export async function fetchTrades(uid: string, year: number, month: number): Pro
     .select('*')
     .eq('user_id', uid)
     .eq('year_month', yearMonthKey(year, month))
+    .order('date', { ascending: true })
     .order('created_at', { ascending: true });
 
   if (error) {
@@ -91,7 +92,6 @@ export async function addTrade(
     .insert({
       user_id: uid,
       year_month: yearMonthKey(year, month),
-      trade_number: trade.tradeNumber,
       date: trade.date,
       day: trade.day,
       pair: trade.pair,
@@ -127,7 +127,6 @@ export async function updateTrade(
 
   // Map Trade field names to DB column names
   const dbUpdates: Record<string, any> = {};
-  if (updates.tradeNumber !== undefined) dbUpdates.trade_number = updates.tradeNumber;
   if (updates.date !== undefined) dbUpdates.date = updates.date;
   if (updates.day !== undefined) dbUpdates.day = updates.day;
   if (updates.pair !== undefined) dbUpdates.pair = updates.pair;
@@ -343,7 +342,6 @@ export async function uploadImage(
 function mapDbToTrade(row: any): Trade {
   return {
     id: row.id,
-    tradeNumber: row.trade_number || '',
     date: row.date || '',
     day: row.day || '',
     pair: row.pair || '',

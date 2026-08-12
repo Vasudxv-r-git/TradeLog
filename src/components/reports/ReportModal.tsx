@@ -7,7 +7,7 @@ import { MONTHS } from '@/lib/constants';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchTrades, fetchTradesForDateRange, fetchAvailableYears, getUserProfile } from '@/lib/database';
 import { generateReportPDF } from '@/lib/reportGenerator';
-import DatePickerPopup from '@/components/fields/DatePickerPopup';
+import DatePickerField from '@/components/fields/DatePickerField';
 
 interface ReportModalProps {
   onClose: () => void;
@@ -36,8 +36,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
   const [startDate, setStartDate] = useState<string>(firstDayOfMonthStr);
   const [endDate, setEndDate] = useState<string>(todayStr);
 
-  const [showStartDatePicker, setShowStartDatePicker] = useState<boolean>(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState<boolean>(false);
+  // Date picker state removed
 
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -355,51 +354,21 @@ export default function ReportModal({ onClose }: ReportModalProps) {
               {/* Start Date Picker */}
               <div style={{ position: 'relative' }}>
                 <label style={labelStyle}>Start Date</label>
-                <button
-                  onClick={() => {
-                    setShowStartDatePicker(!showStartDatePicker);
-                    setShowEndDatePicker(false);
-                  }}
-                  style={inputButtonStyle}
-                >
-                  <span>{startDate || 'Select Date'}</span>
-                  <Calendar size={14} style={{ color: 'var(--text-tertiary)' }} />
-                </button>
-                {showStartDatePicker && (
-                  <DatePickerPopup
-                    value={startDate}
-                    onChange={(date) => {
-                      setStartDate(date);
-                      setShowStartDatePicker(false);
-                    }}
-                    onClose={() => setShowStartDatePicker(false)}
-                  />
-                )}
+                <DatePickerField
+                  value={startDate}
+                  onChange={(date) => setStartDate(date)}
+                  showIcon={true}
+                />
               </div>
 
               {/* End Date Picker */}
               <div style={{ position: 'relative' }}>
                 <label style={labelStyle}>End Date</label>
-                <button
-                  onClick={() => {
-                    setShowEndDatePicker(!showEndDatePicker);
-                    setShowStartDatePicker(false);
-                  }}
-                  style={inputButtonStyle}
-                >
-                  <span>{endDate || 'Select Date'}</span>
-                  <Calendar size={14} style={{ color: 'var(--text-tertiary)' }} />
-                </button>
-                {showEndDatePicker && (
-                  <DatePickerPopup
-                    value={endDate}
-                    onChange={(date) => {
-                      setEndDate(date);
-                      setShowEndDatePicker(false);
-                    }}
-                    onClose={() => setShowEndDatePicker(false)}
-                  />
-                )}
+                <DatePickerField
+                  value={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  showIcon={true}
+                />
               </div>
             </div>
           )}

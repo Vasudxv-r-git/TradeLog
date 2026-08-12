@@ -27,7 +27,6 @@ export const DEFAULT_COLUMNS: ColumnDef[] = [
 
 export function createEmptyTrade(): Omit<import('@/types').Trade, 'id' | 'createdAt' | 'updatedAt'> {
   return {
-    tradeNumber: '',
     date: '',
     day: '',
     pair: '',
