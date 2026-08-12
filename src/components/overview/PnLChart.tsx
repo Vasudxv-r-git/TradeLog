@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Trade } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -39,8 +39,6 @@ export default function PnLChart({ trades }: PnLChartProps) {
   const gradientId = 'pnlGradient';
   const textColor = theme === 'dark' ? '#71717a' : '#94a3b8';
   const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-  const tooltipBg = theme === 'dark' ? '#18181b' : '#ffffff';
-  const tooltipBorder = theme === 'dark' ? '#27272a' : '#e2e8f0';
 
   return (
     <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 20px 12px', opacity: 0, animation: 'staggerFadeIn 400ms var(--ease-out) 200ms forwards' }}>
@@ -65,23 +63,6 @@ export default function PnLChart({ trades }: PnLChartProps) {
             tickLine={false}
             axisLine={false}
             tickFormatter={(v: number) => `$${v}`}
-          />
-          <Tooltip
-            contentStyle={{
-              background: tooltipBg,
-              border: `1px solid ${tooltipBorder}`,
-              borderRadius: '10px',
-              fontSize: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              padding: '10px 14px',
-            }}
-            labelStyle={{ fontWeight: 600, marginBottom: 4, color: theme === 'dark' ? '#fafafa' : '#0f1729' }}
-            formatter={(value: unknown, name: unknown) => {
-              const label = String(name) === 'cumulative' ? 'Cumulative P&L' : String(name);
-              const numValue = typeof value === 'number' ? value : Number(value);
-              return [`$${(numValue || 0).toFixed(2)}`, label];
-            }}
-            cursor={false}
           />
           <Area
             type="monotone"
