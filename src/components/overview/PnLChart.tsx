@@ -81,7 +81,7 @@ export default function PnLChart({ trades }: PnLChartProps) {
               const numValue = typeof value === 'number' ? value : Number(value);
               return [`$${(numValue || 0).toFixed(2)}`, label];
             }}
-            cursor={{ stroke: lineColor, strokeWidth: 1, strokeDasharray: '4 4' }}
+            cursor={false}
           />
           <Area
             type="monotone"
@@ -91,7 +91,7 @@ export default function PnLChart({ trades }: PnLChartProps) {
             strokeWidth={2.5}
             fill={`url(#${gradientId})`}
             dot={false}
-            activeDot={{ r: 5, fill: lineColor, stroke: theme === 'dark' ? '#18181b' : '#ffffff', strokeWidth: 2 }}
+            activeDot={false}
           />
         </AreaChart>
       </ResponsiveContainer>
