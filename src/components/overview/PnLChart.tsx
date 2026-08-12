@@ -38,7 +38,7 @@ export default function PnLChart({ trades }: PnLChartProps) {
   const tooltipBorder = theme === 'dark' ? '#27272a' : '#e2e8f0';
 
   return (
-    <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 20px 12px', animation: 'fadeIn 0.3s ease-out' }}>
+    <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 20px 12px', opacity: 0, animation: 'staggerFadeIn 400ms var(--ease-out) 200ms forwards' }}>
       <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 16 }}>Cumulative P&L</h3>
       <ResponsiveContainer width="100%" height={260}>
         <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>

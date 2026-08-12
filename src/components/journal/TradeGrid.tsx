@@ -141,7 +141,7 @@ export default function TradeGrid({ customColumns, hiddenColumns, sectionOrder, 
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '16px 0' }}>
-        {[...Array(5)].map((_, i) => (<div key={i} className="skeleton" style={{ height: 44, borderRadius: 6 }} />))}
+        {[...Array(5)].map((_, i) => (<div key={i} className="skeleton" style={{ height: 44, borderRadius: 6, opacity: 0, animation: `staggerFadeIn 300ms var(--ease-out) ${i * 60}ms forwards` }} />))}
       </div>
     );
   }

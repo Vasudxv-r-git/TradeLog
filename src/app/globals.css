@@ -39,6 +39,17 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* ─── Motion Design System ─── */
+  /* Strong custom curves — built-in CSS easings are too weak for intentional motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Duration tokens */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
 }
 
 [data-theme='dark'] {
@@ -95,7 +106,8 @@ a {
   text-decoration: none;
 }
 
-/* Animations */
+/* ─── Animations (keyframes) ─── */
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -107,8 +119,8 @@ a {
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @keyframes spin {
@@ -116,15 +128,46 @@ a {
 }
 
 @keyframes rowInsert {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes staggerFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes emptyStateIcon {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes emptyStateFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes subtlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes skeletonShimmer {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
 }
 
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
-/* Buttons */
+/* ─── Buttons ─── */
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -136,7 +179,16 @@ a {
   font-weight: 500;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    opacity 200ms ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn-sm {
@@ -157,6 +209,10 @@ a {
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-primary:disabled:active {
+  transform: none;
 }
 
 .btn-secondary {
@@ -180,7 +236,14 @@ a {
   color: var(--text-secondary);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.btn-icon:active {
+  transform: scale(0.92);
 }
 
 .btn-icon:hover {
@@ -188,7 +251,15 @@ a {
   color: var(--text-primary);
 }
 
-/* Scrollbars */
+/* ─── Skeleton loader ─── */
+
+.skeleton {
+  background: var(--bg-tertiary);
+  animation: skeletonShimmer 0.8s ease-in-out infinite alternate;
+}
+
+/* ─── Scrollbars ─── */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -204,7 +275,8 @@ a {
   background: var(--border-hover);
 }
 
-/* Tooltips */
+/* ─── Tooltips ─── */
+
 [data-tooltip] {
   position: relative;
 }
@@ -213,7 +285,8 @@ a {
   position: absolute;
   top: calc(100% + 6px);
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(0.97);
+  transform-origin: top center;
   background: var(--surface-card);
   color: var(--text-primary);
   padding: 4px 8px;
@@ -226,9 +299,44 @@ a {
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
+  transition:
+    opacity 125ms var(--ease-out),
+    transform 125ms var(--ease-out),
+    visibility 125ms var(--ease-out);
 }
 [data-tooltip]:hover::after {
   opacity: 1;
   visibility: visible;
+  transform: translateX(-50%) scale(1);
+}
+
+/* ─── Accessibility: Reduced Motion ─── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 200ms !important;
+  }
+
+  /* Keep opacity transitions for comprehension, remove transform-based motion */
+  .btn:active,
+  .btn-icon:active {
+    transform: none !important;
+  }
+
+  [data-tooltip]::after {
+    transform: translateX(-50%) !important;
+  }
+}
+
+/* ─── Hover gating for touch devices ─── */
+
+@media not all and (hover: hover) and (pointer: fine) {
+  [data-tooltip]:hover::after {
+    opacity: 0;
+    visibility: hidden;
+  }
 }

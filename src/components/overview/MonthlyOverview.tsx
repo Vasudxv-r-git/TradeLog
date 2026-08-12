@@ -23,20 +23,43 @@ export default function MonthlyOverview({ trades, year, month }: MonthlyOverview
 
   if (trades.length === 0) return null;
 
-  const cardStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, padding: 16, background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 10, transition: 'transform 0.2s ease, box-shadow 0.2s ease' };
+  const cards = [
+    { label: 'Total P&L', value: `$${stats.totalPnL.toFixed(2)}`, color: stats.totalPnL >= 0 ? 'var(--success-text)' : 'var(--danger-text)' },
+    { label: 'Commission', value: `$${Math.abs(stats.totalCommission).toFixed(2)}`, color: 'var(--danger-text)' },
+    { label: 'Net P&L', value: `$${stats.netPnL.toFixed(2)}`, color: stats.netPnL >= 0 ? 'var(--success-text)' : 'var(--danger-text)' },
+    { label: 'Trades', value: String(stats.tradeCount), color: 'var(--text-primary)' },
+    { label: 'Win Rate', value: `${stats.winRate}%`, color: stats.winRate >= 50 ? 'var(--success-text)' : 'var(--danger-text)' },
+  ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.3s ease-out' }}>
-      <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{MONTHS[month - 1]} {year} Overview</h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', opacity: 0, animation: 'staggerFadeIn 300ms var(--ease-out) forwards' }}>{MONTHS[month - 1]} {year} Overview</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
-        {[
-          { label: 'Total P&L', value: `$${stats.totalPnL.toFixed(2)}`, color: stats.totalPnL >= 0 ? 'var(--success-text)' : 'var(--danger-text)' },
-          { label: 'Commission', value: `$${Math.abs(stats.totalCommission).toFixed(2)}`, color: 'var(--danger-text)' },
-          { label: 'Net P&L', value: `$${stats.netPnL.toFixed(2)}`, color: stats.netPnL >= 0 ? 'var(--success-text)' : 'var(--danger-text)' },
-          { label: 'Trades', value: String(stats.tradeCount), color: 'var(--text-primary)' },
-          { label: 'Win Rate', value: `${stats.winRate}%`, color: stats.winRate >= 50 ? 'var(--success-text)' : 'var(--danger-text)' },
-        ].map((card) => (
-          <div key={card.label} style={cardStyle}>
+        {cards.map((card, index) => (
+          <div
+            key={card.label}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              padding: 16,
+              background: 'var(--surface-card)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 10,
+              transition: 'transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out)',
+              cursor: 'default',
+              opacity: 0,
+              animation: `staggerFadeIn 300ms var(--ease-out) ${(index + 1) * 50}ms forwards`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
             <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{card.label}</span>
             <span style={{ fontSize: '1.25rem', fontWeight: 700, color: card.color }}>{card.value}</span>
           </div>

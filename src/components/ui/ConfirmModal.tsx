@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 interface ConfirmModalProps {
   title: string;
   message?: string;
@@ -8,6 +10,13 @@ interface ConfirmModalProps {
 }
 
 export default function ConfirmModal({ title, message = 'This action cannot be undone.', onConfirm, onCancel }: ConfirmModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // Trigger entrance transition on next frame
+    requestAnimationFrame(() => setMounted(true));
+  }, []);
+
   return (
     <div 
       onClick={onCancel} 
@@ -19,7 +28,8 @@ export default function ConfirmModal({ title, message = 'This action cannot be u
         alignItems: 'center', 
         justifyContent: 'center', 
         zIndex: 2000, 
-        animation: 'fadeIn 0.15s ease-out' 
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 250ms var(--ease-out)',
       }}
     >
       <div 
@@ -30,11 +40,13 @@ export default function ConfirmModal({ title, message = 'This action cannot be u
           boxShadow: 'var(--shadow-xl)', 
           width: '100%', 
           maxWidth: 280, 
-          animation: 'scaleIn 0.2s ease-out', 
           display: 'flex', 
           flexDirection: 'column', 
           overflow: 'hidden',
-          border: '1px solid var(--border-default)'
+          border: '1px solid var(--border-default)',
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'scale(1)' : 'scale(0.96)',
+          transition: 'opacity 250ms var(--ease-out), transform 250ms var(--ease-out)',
         }}
       >
         <div style={{ padding: '20px 16px 16px', textAlign: 'center' }}>
@@ -56,7 +68,8 @@ export default function ConfirmModal({ title, message = 'This action cannot be u
               borderRight: '1px solid var(--border-default)', 
               fontSize: '1rem', 
               color: 'var(--accent)', 
-              cursor: 'pointer' 
+              cursor: 'pointer',
+              transition: 'transform 160ms var(--ease-out), background-color 150ms ease',
             }}
           >
             Cancel
@@ -71,7 +84,8 @@ export default function ConfirmModal({ title, message = 'This action cannot be u
               fontSize: '1rem', 
               fontWeight: 600, 
               color: 'var(--danger-text)', 
-              cursor: 'pointer' 
+              cursor: 'pointer',
+              transition: 'transform 160ms var(--ease-out), background-color 150ms ease',
             }}
           >
             Delete

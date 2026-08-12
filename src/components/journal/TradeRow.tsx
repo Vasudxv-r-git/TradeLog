@@ -21,6 +21,9 @@ export default function TradeRow({ trade, index, columns, onEdit, onDelete, remo
     padding: '4px 10px', fontSize: '0.8125rem', color: 'var(--text-primary)',
   };
 
+  // Cap stagger at 10 rows to avoid long waits on large datasets
+  const staggerDelay = Math.min(index, 10) * 30;
+
   const renderCellValue = (col: ColumnDef) => {
     switch (col.key) {
       case 'tradeNumber': return <span style={{ fontWeight: 500 }}>{index + 1}</span>;
@@ -79,10 +82,11 @@ export default function TradeRow({ trade, index, columns, onEdit, onDelete, remo
       onMouseLeave={() => setHovered(false)}
       style={{
         display: 'flex', alignItems: 'stretch', borderBottom: '1px solid var(--grid-border)',
-        transition: 'background-color 0.15s ease, opacity 0.2s ease, transform 0.2s ease',
-        animation: 'rowInsert 0.25s ease-out',
+        transition: 'background-color 150ms ease, opacity 200ms var(--ease-out), transform 200ms var(--ease-out)',
+        opacity: removing ? 0 : undefined,
+        transform: removing ? 'translateX(-20px)' : 'none',
+        animation: `rowInsert 250ms var(--ease-out) ${staggerDelay}ms both`,
         background: hovered ? 'var(--grid-row-hover)' : (index % 2 === 1 ? 'var(--grid-row-alt)' : 'transparent'),
-        opacity: removing ? 0 : 1, transform: removing ? 'translateX(-20px)' : 'none',
       }}
     >
       {/* Row number */}
@@ -99,10 +103,10 @@ export default function TradeRow({ trade, index, columns, onEdit, onDelete, remo
 
       {/* Actions */}
       <div style={{ width: 70, minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, position: 'sticky', right: 0, background: hovered ? 'var(--grid-row-hover)' : (index % 2 === 1 ? 'var(--grid-row-alt)' : 'var(--surface-card)'), borderLeft: '1px solid var(--grid-border)', zIndex: 1 }}>
-          <button onClick={onEdit} title="Edit trade" style={{ opacity: hovered ? 1 : 0, color: 'var(--accent-text)', padding: 4, borderRadius: 4, cursor: 'pointer', background: 'none', border: 'none', transition: 'all 0.15s ease', display: 'flex' }}>
+          <button onClick={onEdit} title="Edit trade" style={{ opacity: hovered ? 1 : 0, color: 'var(--accent-text)', padding: 4, borderRadius: 4, cursor: 'pointer', background: 'none', border: 'none', transition: 'opacity 150ms ease, transform 160ms var(--ease-out)', display: 'flex' }}>
             <Pencil size={14} />
           </button>
-          <button onClick={onDelete} title="Delete trade" style={{ opacity: hovered ? 1 : 0, color: 'var(--text-tertiary)', padding: 4, borderRadius: 4, cursor: 'pointer', background: 'none', border: 'none', transition: 'all 0.15s ease', display: 'flex' }}>
+          <button onClick={onDelete} title="Delete trade" style={{ opacity: hovered ? 1 : 0, color: 'var(--text-tertiary)', padding: 4, borderRadius: 4, cursor: 'pointer', background: 'none', border: 'none', transition: 'opacity 150ms ease, transform 160ms var(--ease-out)', display: 'flex' }}>
             <Trash2 size={14} />
           </button>
       </div>

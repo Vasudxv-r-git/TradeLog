@@ -175,7 +175,8 @@ export default function ReportModal({ onClose }: ReportModalProps) {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
-        animation: 'fadeIn 0.2s ease',
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 250ms var(--ease-out)',
       }}
     >
       {/* Modal Card */}
@@ -192,8 +193,10 @@ export default function ReportModal({ onClose }: ReportModalProps) {
           display: 'flex',
           flexDirection: 'column',
           overflowY: 'auto',
-          animation: 'scaleIn 0.2s ease-out',
           position: 'relative',
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'scale(1)' : 'scale(0.96)',
+          transition: 'opacity 250ms var(--ease-out), transform 250ms var(--ease-out)',
         }}
       >
         {/* Modal Header */}
@@ -267,7 +270,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
                 fontWeight: 600,
                 border: 'none',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                transition: 'background-color 150ms ease, color 150ms ease, box-shadow 150ms ease',
                 background: activeTab === 'monthly' ? 'var(--surface-card)' : 'transparent',
                 color: activeTab === 'monthly' ? 'var(--text-primary)' : 'var(--text-tertiary)',
                 boxShadow: activeTab === 'monthly' ? 'var(--shadow-sm)' : 'none',
@@ -285,7 +288,7 @@ export default function ReportModal({ onClose }: ReportModalProps) {
                 fontWeight: 600,
                 border: 'none',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                transition: 'background-color 150ms ease, color 150ms ease, box-shadow 150ms ease',
                 background: activeTab === 'custom' ? 'var(--surface-card)' : 'transparent',
                 color: activeTab === 'custom' ? 'var(--text-primary)' : 'var(--text-tertiary)',
                 boxShadow: activeTab === 'custom' ? 'var(--shadow-sm)' : 'none',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, GripVertical, Settings2, RotateCcw, Check, Columns3 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -91,6 +91,7 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [showDeleteColumn, setShowDeleteColumn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [panelMounted, setPanelMounted] = useState(false);
 
   const [isRearranging, setIsRearranging] = useState(false);
   const DEFAULT_SECTION_ORDER = [
@@ -137,6 +138,11 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
   );
 
   const handleUpdate = (updates: Partial<Trade>) => setTrade((prev) => ({ ...prev, ...updates }));
+
+  // Trigger entrance transition
+  useEffect(() => {
+    requestAnimationFrame(() => setPanelMounted(true));
+  }, []);
 
   // Auto-calculate day when date changes and day is missing
   useEffect(() => {
@@ -400,8 +406,8 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--surface-overlay)', zIndex: 400, animation: 'fadeIn 0.2s ease' }} />
-      <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '100%', maxWidth: 560, background: 'var(--surface-elevated)', zIndex: 410, display: 'flex', flexDirection: 'column', boxShadow: '-10px 0 40px rgba(0,0,0,0.15)', animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--surface-overlay)', zIndex: 400, opacity: panelMounted ? 1 : 0, transition: 'opacity 250ms var(--ease-out)' }} />
+      <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '100%', maxWidth: 560, background: 'var(--surface-elevated)', zIndex: 410, display: 'flex', flexDirection: 'column', boxShadow: '-10px 0 40px rgba(0,0,0,0.15)', transform: panelMounted ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 400ms var(--ease-drawer)' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 32px', borderBottom: '1px solid var(--border-default)' }}>
           <div>
@@ -449,8 +455,8 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
                 </SortableContext>
               </DndContext>
             ) : (
-              activeOrder.map((key) => (
-                <div key={key}>
+              activeOrder.map((key, i) => (
+                <div key={key} style={{ opacity: 0, animation: `staggerFadeIn 300ms var(--ease-out) ${i * 50}ms forwards` }}>
                   {sectionContents[key]}
                 </div>
               ))
@@ -482,12 +488,6 @@ export default function TradePanel({ customColumns, customPairs, hiddenColumns, 
           onDelete={(colKey) => { onDeleteCustomColumn(colKey); setShowDeleteColumn(false); }}
         />
       )}
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes slideInRight {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-      `}} />
     </>
   );
 }
